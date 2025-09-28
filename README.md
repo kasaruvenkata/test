@@ -1,4 +1,16 @@
 monitor_daily.yml – Daily File Validation
+
+
+Reports missing files in Azure or S3.
+
+Reports zero-size files (files copied but empty).
+
+Email body includes all mismatches, not just a single alert.
+
+Fully parameterized by environment (ENV=uat/prod) for pipeline selection.
+
+
+
 Purpose
 
 Validate that all expected files are successfully copied from Azure Blob Storage → AWS S3 for today’s date.
