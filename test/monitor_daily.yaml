@@ -57,13 +57,13 @@ steps:
     export ENV=${{ parameters.environment }}
     export MODE=daily
     python modules/lambda/MonitorLambda/monitor_lambda.py
-  displayName: "Run Daily Monitor"
+  displayName: "Run Daily Monitor Lambda"
 
 - task: SendEmail@1
   condition: failed()
   inputs:
     To: "$(EMAIL_TO)"
-    Subject: "❌ Daily File Transfer Validation Failed - ${{ parameters.environment }}"
+    Subject: "❌ Daily File Validation Failed - ${{ parameters.environment }}"
     Body: |
-      One or more expected files are missing or have size 0 in Azure Blob or S3 for environment: ${{ parameters.environment }}.
-      Please check the pipeline logs for details.
+      Daily File Transfer Validation Report for environment: ${{ parameters.environment }}.
+      Check the pipeline logs for detailed missing or zero-size file list.
