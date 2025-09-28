@@ -1,56 +1,9 @@
-2025-09-28T19:44:06.4544981Z ##[section]Starting: Run Daily Monitor Lambda
-2025-09-28T19:44:06.4551967Z ==============================================================================
-2025-09-28T19:44:06.4552140Z Task         : Command line
-2025-09-28T19:44:06.4552245Z Description  : Run a command line script using Bash on Linux and macOS and cmd.exe on Windows
-2025-09-28T19:44:06.4552398Z Version      : 2.250.1
-2025-09-28T19:44:06.4552497Z Author       : Microsoft Corporation
-2025-09-28T19:44:06.4552598Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/command-line
-2025-09-28T19:44:06.4552762Z ==============================================================================
-2025-09-28T19:44:06.5903422Z Generating script.
-2025-09-28T19:44:06.5911967Z ========================== Starting Command Output ===========================
-2025-09-28T19:44:06.5924947Z [command]/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/64528ca4-d190-47c7-aa4f-3ad6b07b1a9a.sh
-2025-09-28T19:44:09.6170930Z Defaulting to user installation because normal site-packages is not writeable
-2025-09-28T19:44:11.3516362Z Requirement already satisfied: pip in /usr/lib/python3/dist-packages (24.0)
-2025-09-28T19:44:11.4802685Z Collecting pip
-2025-09-28T19:44:11.5483909Z   Downloading pip-25.2-py3-none-any.whl.metadata (4.7 kB)
-2025-09-28T19:44:11.5643624Z Downloading pip-25.2-py3-none-any.whl (1.8 MB)
-2025-09-28T19:44:11.6242652Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 31.7 MB/s eta 0:00:00
-2025-09-28T19:44:11.9656466Z Installing collected packages: pip
-2025-09-28T19:44:12.6879396Z Successfully installed pip-25.2
-2025-09-28T19:44:13.0321233Z Defaulting to user installation because normal site-packages is not writeable
-2025-09-28T19:44:13.6029029Z Requirement already satisfied: boto3 in /usr/lib/python3/dist-packages (from -r modules/lambda/MonitorLambda/requirements.txt (line 1)) (1.34.46)
-2025-09-28T19:44:13.6847449Z Collecting azure-storage-blob (from -r modules/lambda/MonitorLambda/requirements.txt (line 2))
-2025-09-28T19:44:13.7408030Z   Downloading azure_storage_blob-12.26.0-py3-none-any.whl.metadata (26 kB)
-2025-09-28T19:44:13.7764214Z Collecting azure-core>=1.30.0 (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2))
-2025-09-28T19:44:13.7879635Z   Downloading azure_core-1.35.1-py3-none-any.whl.metadata (46 kB)
-2025-09-28T19:44:13.7993219Z Requirement already satisfied: cryptography>=2.1.4 in /usr/lib/python3/dist-packages (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (41.0.7)
-2025-09-28T19:44:13.7997674Z Requirement already satisfied: typing-extensions>=4.6.0 in /usr/lib/python3/dist-packages (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (4.10.0)
-2025-09-28T19:44:13.8150997Z Collecting isodate>=0.6.1 (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2))
-2025-09-28T19:44:13.8265006Z   Downloading isodate-0.7.2-py3-none-any.whl.metadata (11 kB)
-2025-09-28T19:44:13.8311510Z Requirement already satisfied: requests>=2.21.0 in /usr/lib/python3/dist-packages (from azure-core>=1.30.0->azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (2.31.0)
-2025-09-28T19:44:13.8320763Z Requirement already satisfied: six>=1.11.0 in /usr/lib/python3/dist-packages (from azure-core>=1.30.0->azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (1.16.0)
-2025-09-28T19:44:13.8482400Z Downloading azure_storage_blob-12.26.0-py3-none-any.whl (412 kB)
-2025-09-28T19:44:13.8832888Z Downloading azure_core-1.35.1-py3-none-any.whl (211 kB)
-2025-09-28T19:44:13.8976348Z Downloading isodate-0.7.2-py3-none-any.whl (22 kB)
-2025-09-28T19:44:13.9772183Z Installing collected packages: isodate, azure-core, azure-storage-blob
-2025-09-28T19:44:14.3472016Z 
-2025-09-28T19:44:14.3479828Z Successfully installed azure-core-1.35.1 azure-storage-blob-12.26.0 isodate-0.7.2
-2025-09-28T19:44:20.0367585Z Error retrieving secret: An error occurred (UnrecognizedClientException) when calling the GetSecretValue operation: The security token included in the request is invalid.
-2025-09-28T19:44:20.0628524Z Traceback (most recent call last):
-2025-09-28T19:44:20.0629000Z   File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 125, in <module>
-2025-09-28T19:44:20.0629711Z     lambda_handler()
-2025-09-28T19:44:20.0630601Z   File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 114, in lambda_handler
-2025-09-28T19:44:20.0631364Z     secret = get_secret()
-2025-09-28T19:44:20.0632365Z              ^^^^^^^^^^^^
-2025-09-28T19:44:20.0633276Z   File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 40, in get_secret
-2025-09-28T19:44:20.0634071Z     response = secrets_client.get_secret_value(SecretId=SECRET_NAME)
-2025-09-28T19:44:20.0634913Z                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:44:20.0635782Z   File "/usr/lib/python3/dist-packages/botocore/client.py", line 553, in _api_call
-2025-09-28T19:44:20.0736821Z     return self._make_api_call(operation_name, kwargs)
-2025-09-28T19:44:20.0738083Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:44:20.0738997Z   File "/usr/lib/python3/dist-packages/botocore/client.py", line 1009, in _make_api_call
-2025-09-28T19:44:20.0741328Z     raise error_class(parsed_response, operation_name)
-2025-09-28T19:44:20.0742533Z botocore.exceptions.ClientError: An error occurred (UnrecognizedClientException) when calling the GetSecretValue operation: The security token included in the request is invalid.
-2025-09-28T19:44:20.1477170Z 
-2025-09-28T19:44:20.1513472Z ##[error]Bash exited with code '1'.
-2025-09-28T19:44:20.1541327Z ##[section]Finishing: Run Daily Monitor Lambda
+Run Monitor Lambda - Validate files & size 
+error:
+/home/vsts/work/_temp/a2b0b469-2475-44d8-8240-dc09276a8d2b.sh: line 3: ***_ACCESS_KEY_ID: command not found
+/home/vsts/work/_temp/a2b0b469-2475-44d8-8240-dc09276a8d2b.sh: line 3: ***_SECRET_ACCESS_KEY: command not found
+28 Sep 2025 20:34:16,484 [INFO] (rapid) exec '/var/runtime/bootstrap' (cwd=/var/task, handler=)
+
+i have vairable group these values are given "uat-aws-credentials" :
+AWS_ACCESS_KEY_ID 
+AWS_SECRET_ACCESS_KEY
