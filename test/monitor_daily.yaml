@@ -9,15 +9,21 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+parameters:
+  - name: environment
+    type: string
+    default: 'uat'
+    values:
+      - uat
+      - prod
+
+name: '$(Date:yyyyMMdd)$(Rev:.r) Monitor Daily - ${{ parameters.environment }}'
+
 variables:
-  S3_UAT_BUCKET: "aabackstop-uat"
-  S3_PROD_BUCKET: "aabackstop-prod"
-  AZURE_CONTAINER_UAT: "uat"
-  AZURE_CONTAINER_PROD: "prod"
-  EMAIL_TO: "venkata.kasaru@theaa.com"
   SECRET_NAME: "azneprod"
   AWS_REGION: "eu-west-1"
   MODE: "daily"
+  EMAIL_TO: "venkata.kasaru@theaa.com"
 
 steps:
 - task: DockerInstaller@0
@@ -33,21 +39,23 @@ steps:
     tags: |
       $(Build.BuildId)
     arguments: |
-      --build-arg S3_BUCKET=aabackstop-$(parameters.environment)
+      --build-arg ENV=${{ parameters.environment }}
 
 - task: ECRPushImage@1
   displayName: 'Monitor Lambda - Push image to ECR'
   inputs:
-    awsCredentials: 'AWS-ECR-$(parameters.environment)'
+    awsCredentials: ${{ format('AWS-ECR-{0}', parameters.environment) }}
     regionName: 'eu-west-1'
     imageSource: 'imagename'
     sourceImageName: 'aa-monitorlambda'
     sourceImageTag: '$(Build.BuildId)'
-    repositoryName: 'aa-monitorlambda-ecr'
+    repositoryName: ${{ format('{0}-ecr', parameters.environment) }}
     pushTag: 'monitorlambda'
 
 - script: |
     pip install -r modules/lambda/MonitorLambda/requirements.txt
+    export ENV=${{ parameters.environment }}
+    export MODE=daily
     python modules/lambda/MonitorLambda/monitor_lambda.py
   displayName: "Run Daily Monitor"
 
@@ -55,7 +63,7 @@ steps:
   condition: failed()
   inputs:
     To: "$(EMAIL_TO)"
-    Subject: "❌ Daily File Transfer Validation Failed"
+    Subject: "❌ Daily File Transfer Validation Failed - ${{ parameters.environment }}"
     Body: |
-      One or more expected files are missing or have size 0 in Azure Blob or S3.
+      One or more expected files are missing or have size 0 in Azure Blob or S3 for environment: ${{ parameters.environment }}.
       Please check the pipeline logs for details.
