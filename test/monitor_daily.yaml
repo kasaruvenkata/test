@@ -56,19 +56,18 @@ steps:
 # Run the Monitor Lambda Python script using the same AWS credentials
 # ==============================
 - script: |
-    # Use AWS credentials from the ECR task via environment variables
-    export ENV=${{ parameters.environment }}
-    export MODE=daily
-    export AWS_DEFAULT_REGION=$(AWS_REGION)
-    export AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)
-    export AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)
-    export AWS_SESSION_TOKEN=$(AWS_SESSION_TOKEN)
-
     pip install --upgrade pip
     pip install -r modules/lambda/MonitorLambda/requirements.txt
 
     python modules/lambda/MonitorLambda/monitor_lambda.py
   displayName: "Run Daily Monitor Lambda"
+  env:
+    ENV: ${{ parameters.environment }}
+    MODE: daily
+    AWS_DEFAULT_REGION: $(AWS_REGION)
+    AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+    AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+
 
 - task: SendEmail@1
   condition: failed()
@@ -78,3 +77,4 @@ steps:
     Body: |
       Daily File Transfer Validation Report for environment: ${{ parameters.environment }}.
       Check the pipeline logs for detailed missing or zero-size file list.
+
