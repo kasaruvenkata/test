@@ -1,1 +1,14 @@
-
+2025-09-28T17:22:51.2863397Z ##[section]Starting: Monitor Lambda - Build Docker Image
+2025-09-28T17:22:51.2870886Z ==============================================================================
+2025-09-28T17:22:51.2870999Z Task         : Docker
+2025-09-28T17:22:51.2871101Z Description  : Build or push Docker images, login or logout, start or stop containers, or run a Docker command
+2025-09-28T17:22:51.2871196Z Version      : 2.259.0
+2025-09-28T17:22:51.2871415Z Author       : Microsoft Corporation
+2025-09-28T17:22:51.2871479Z Help         : https://aka.ms/azpipes-docker-tsg
+2025-09-28T17:22:51.2871541Z ==============================================================================
+2025-09-28T17:22:51.9459103Z ##[error]Unhandled: No Dockerfile matching  /home/vsts/work/1/s/**/modules/lambda/MonitorLambda/Dockerfile  was found.
+2025-09-28T17:22:51.9465331Z ##[error]Error: No Dockerfile matching  /home/vsts/work/1/s/**/modules/lambda/MonitorLambda/Dockerfile  was found.
+    at Object.findDockerFile (/home/vsts/work/_tasks/Docker_e28912f1-0114-4464-802a-a3a35437fd16/2.259.0/node_modules/azure-pipelines-tasks-docker-common/fileutils.js:32:19)
+    at Object.run (/home/vsts/work/_tasks/Docker_e28912f1-0114-4464-802a-a3a35437fd16/2.259.0/dockerbuild.js:13:32)
+    at /home/vsts/work/_tasks/Docker_e28912f1-0114-4464-802a-a3a35437fd16/2.259.0/docker.js:72:27
+2025-09-28T17:22:51.9468189Z ##[section]Finishing: Monitor Lambda - Build Docker Image
