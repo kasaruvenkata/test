@@ -1,86 +1,56 @@
-2025-09-28T19:33:04.9312865Z ##[section]Starting: Run Daily Monitor Lambda
-2025-09-28T19:33:04.9329545Z ==============================================================================
-2025-09-28T19:33:04.9329718Z Task         : Command line
-2025-09-28T19:33:04.9329825Z Description  : Run a command line script using Bash on Linux and macOS and cmd.exe on Windows
-2025-09-28T19:33:04.9329985Z Version      : 2.250.1
-2025-09-28T19:33:04.9330091Z Author       : Microsoft Corporation
-2025-09-28T19:33:04.9330203Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/command-line
-2025-09-28T19:33:04.9330381Z ==============================================================================
-2025-09-28T19:33:05.0757118Z Generating script.
-2025-09-28T19:33:05.0765358Z ========================== Starting Command Output ===========================
-2025-09-28T19:33:05.0778986Z [command]/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/f09da8b5-6b6f-41f0-b63e-419a74e4fc0b.sh
-2025-09-28T19:33:05.0844740Z /home/vsts/work/_temp/f09da8b5-6b6f-41f0-b63e-419a74e4fc0b.sh: line 5: ***_ACCESS_KEY_ID: command not found
-2025-09-28T19:33:05.0849037Z /home/vsts/work/_temp/f09da8b5-6b6f-41f0-b63e-419a74e4fc0b.sh: line 6: ***_SECRET_ACCESS_KEY: command not found
-2025-09-28T19:33:05.0856818Z /home/vsts/work/_temp/f09da8b5-6b6f-41f0-b63e-419a74e4fc0b.sh: line 7: ***_SESSION_TOKEN: command not found
-2025-09-28T19:33:07.7445252Z Defaulting to user installation because normal site-packages is not writeable
-2025-09-28T19:33:08.9260143Z Requirement already satisfied: pip in /usr/lib/python3/dist-packages (24.0)
-2025-09-28T19:33:09.0616603Z Collecting pip
-2025-09-28T19:33:09.3863142Z   Downloading pip-25.2-py3-none-any.whl.metadata (4.7 kB)
-2025-09-28T19:33:09.4035658Z Downloading pip-25.2-py3-none-any.whl (1.8 MB)
-2025-09-28T19:33:09.4683086Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 29.1 MB/s eta 0:00:00
-2025-09-28T19:33:09.7948520Z Installing collected packages: pip
-2025-09-28T19:33:10.5247012Z Successfully installed pip-25.2
-2025-09-28T19:33:10.8511952Z Defaulting to user installation because normal site-packages is not writeable
-2025-09-28T19:33:11.4226369Z Requirement already satisfied: boto3 in /usr/lib/python3/dist-packages (from -r modules/lambda/MonitorLambda/requirements.txt (line 1)) (1.34.46)
-2025-09-28T19:33:11.5083033Z Collecting azure-storage-blob (from -r modules/lambda/MonitorLambda/requirements.txt (line 2))
-2025-09-28T19:33:11.5874257Z   Downloading azure_storage_blob-12.26.0-py3-none-any.whl.metadata (26 kB)
-2025-09-28T19:33:11.6245475Z Collecting azure-core>=1.30.0 (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2))
-2025-09-28T19:33:11.6411674Z   Downloading azure_core-1.35.1-py3-none-any.whl.metadata (46 kB)
-2025-09-28T19:33:11.6518905Z Requirement already satisfied: cryptography>=2.1.4 in /usr/lib/python3/dist-packages (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (41.0.7)
-2025-09-28T19:33:11.6523006Z Requirement already satisfied: typing-extensions>=4.6.0 in /usr/lib/python3/dist-packages (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (4.10.0)
-2025-09-28T19:33:11.6690429Z Collecting isodate>=0.6.1 (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2))
-2025-09-28T19:33:11.6815154Z   Downloading isodate-0.7.2-py3-none-any.whl.metadata (11 kB)
-2025-09-28T19:33:11.6866645Z Requirement already satisfied: requests>=2.21.0 in /usr/lib/python3/dist-packages (from azure-core>=1.30.0->azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (2.31.0)
-2025-09-28T19:33:11.6876141Z Requirement already satisfied: six>=1.11.0 in /usr/lib/python3/dist-packages (from azure-core>=1.30.0->azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (1.16.0)
-2025-09-28T19:33:11.7042544Z Downloading azure_storage_blob-12.26.0-py3-none-any.whl (412 kB)
-2025-09-28T19:33:11.7408803Z Downloading azure_core-1.35.1-py3-none-any.whl (211 kB)
-2025-09-28T19:33:11.7561184Z Downloading isodate-0.7.2-py3-none-any.whl (22 kB)
-2025-09-28T19:33:11.8356688Z Installing collected packages: isodate, azure-core, azure-storage-blob
-2025-09-28T19:33:12.2062889Z 
-2025-09-28T19:33:12.2074189Z Successfully installed azure-core-1.35.1 azure-storage-blob-12.26.0 isodate-0.7.2
-2025-09-28T19:33:17.9124052Z Traceback (most recent call last):
-2025-09-28T19:33:17.9124725Z   File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 125, in <module>
-2025-09-28T19:33:17.9125184Z     lambda_handler()
-2025-09-28T19:33:17.9125591Z   File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 114, in lambda_handler
-2025-09-28T19:33:17.9126035Z     secret = get_secret()
-2025-09-28T19:33:17.9126273Z              ^^^^^^^^^^^^
-2025-09-28T19:33:17.9126596Z   File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 40, in get_secret
-2025-09-28T19:33:17.9127023Z     response = secrets_client.get_secret_value(SecretId=SECRET_NAME)
-2025-09-28T19:33:17.9127381Z                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:33:17.9127645Z   File "/usr/lib/python3/dist-packages/botocore/client.py", line 553, in _api_call
-2025-09-28T19:33:17.9547743Z     return self._make_api_call(operation_name, kwargs)
-2025-09-28T19:33:17.9548945Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:33:17.9549404Z   File "/usr/lib/python3/dist-packages/botocore/client.py", line 989, in _make_api_call
-2025-09-28T19:33:17.9552688Z     http, parsed_response = self._make_request(
-2025-09-28T19:33:17.9553096Z                             ^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:33:17.9553413Z   File "/usr/lib/python3/dist-packages/botocore/client.py", line 1015, in _make_request
-2025-09-28T19:33:17.9553925Z     return self._endpoint.make_request(operation_model, request_dict)
-2025-09-28T19:33:17.9554204Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:33:17.9554438Z   File "/usr/lib/python3/dist-packages/botocore/endpoint.py", line 119, in make_request
-2025-09-28T19:33:17.9600868Z     return self._send_request(request_dict, operation_model)
-2025-09-28T19:33:17.9602360Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:33:17.9602573Z   File "/usr/lib/python3/dist-packages/botocore/endpoint.py", line 198, in _send_request
-2025-09-28T19:33:17.9602796Z     request = self.create_request(request_dict, operation_model)
-2025-09-28T19:33:17.9602970Z               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:33:17.9603161Z   File "/usr/lib/python3/dist-packages/botocore/endpoint.py", line 134, in create_request
-2025-09-28T19:33:17.9603365Z     self._event_emitter.emit(
-2025-09-28T19:33:17.9603871Z   File "/usr/lib/python3/dist-packages/botocore/hooks.py", line 412, in emit
-2025-09-28T19:33:17.9745327Z     return self._emitter.emit(aliased_event_name, **kwargs)
-2025-09-28T19:33:17.9745705Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:33:17.9746049Z   File "/usr/lib/python3/dist-packages/botocore/hooks.py", line 256, in emit
-2025-09-28T19:33:17.9746992Z     return self._emit(event_name, kwargs)
-2025-09-28T19:33:17.9747148Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:33:17.9747303Z   File "/usr/lib/python3/dist-packages/botocore/hooks.py", line 239, in _emit
-2025-09-28T19:33:17.9747681Z     response = handler(**kwargs)
-2025-09-28T19:33:17.9747923Z                ^^^^^^^^^^^^^^^^^
-2025-09-28T19:33:17.9842391Z   File "/usr/lib/python3/dist-packages/botocore/signers.py", line 105, in handler
-2025-09-28T19:33:17.9842826Z     return self.sign(operation_name, request)
-2025-09-28T19:33:17.9843658Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2025-09-28T19:33:17.9844017Z   File "/usr/lib/python3/dist-packages/botocore/signers.py", line 195, in sign
-2025-09-28T19:33:17.9844495Z     auth.add_auth(request)
-2025-09-28T19:33:17.9844839Z   File "/usr/lib/python3/dist-packages/botocore/auth.py", line 418, in add_auth
-2025-09-28T19:33:18.0336049Z     raise NoCredentialsError()
-2025-09-28T19:33:18.0337252Z botocore.exceptions.NoCredentialsError: Unable to locate credentials
-2025-09-28T19:33:18.1099695Z 
-2025-09-28T19:33:18.1139879Z ##[error]Bash exited with code '1'.
-2025-09-28T19:33:18.1166678Z ##[section]Finishing: Run Daily Monitor Lambda
+2025-09-28T19:44:06.4544981Z ##[section]Starting: Run Daily Monitor Lambda
+2025-09-28T19:44:06.4551967Z ==============================================================================
+2025-09-28T19:44:06.4552140Z Task         : Command line
+2025-09-28T19:44:06.4552245Z Description  : Run a command line script using Bash on Linux and macOS and cmd.exe on Windows
+2025-09-28T19:44:06.4552398Z Version      : 2.250.1
+2025-09-28T19:44:06.4552497Z Author       : Microsoft Corporation
+2025-09-28T19:44:06.4552598Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/command-line
+2025-09-28T19:44:06.4552762Z ==============================================================================
+2025-09-28T19:44:06.5903422Z Generating script.
+2025-09-28T19:44:06.5911967Z ========================== Starting Command Output ===========================
+2025-09-28T19:44:06.5924947Z [command]/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/64528ca4-d190-47c7-aa4f-3ad6b07b1a9a.sh
+2025-09-28T19:44:09.6170930Z Defaulting to user installation because normal site-packages is not writeable
+2025-09-28T19:44:11.3516362Z Requirement already satisfied: pip in /usr/lib/python3/dist-packages (24.0)
+2025-09-28T19:44:11.4802685Z Collecting pip
+2025-09-28T19:44:11.5483909Z   Downloading pip-25.2-py3-none-any.whl.metadata (4.7 kB)
+2025-09-28T19:44:11.5643624Z Downloading pip-25.2-py3-none-any.whl (1.8 MB)
+2025-09-28T19:44:11.6242652Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 31.7 MB/s eta 0:00:00
+2025-09-28T19:44:11.9656466Z Installing collected packages: pip
+2025-09-28T19:44:12.6879396Z Successfully installed pip-25.2
+2025-09-28T19:44:13.0321233Z Defaulting to user installation because normal site-packages is not writeable
+2025-09-28T19:44:13.6029029Z Requirement already satisfied: boto3 in /usr/lib/python3/dist-packages (from -r modules/lambda/MonitorLambda/requirements.txt (line 1)) (1.34.46)
+2025-09-28T19:44:13.6847449Z Collecting azure-storage-blob (from -r modules/lambda/MonitorLambda/requirements.txt (line 2))
+2025-09-28T19:44:13.7408030Z   Downloading azure_storage_blob-12.26.0-py3-none-any.whl.metadata (26 kB)
+2025-09-28T19:44:13.7764214Z Collecting azure-core>=1.30.0 (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2))
+2025-09-28T19:44:13.7879635Z   Downloading azure_core-1.35.1-py3-none-any.whl.metadata (46 kB)
+2025-09-28T19:44:13.7993219Z Requirement already satisfied: cryptography>=2.1.4 in /usr/lib/python3/dist-packages (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (41.0.7)
+2025-09-28T19:44:13.7997674Z Requirement already satisfied: typing-extensions>=4.6.0 in /usr/lib/python3/dist-packages (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (4.10.0)
+2025-09-28T19:44:13.8150997Z Collecting isodate>=0.6.1 (from azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2))
+2025-09-28T19:44:13.8265006Z   Downloading isodate-0.7.2-py3-none-any.whl.metadata (11 kB)
+2025-09-28T19:44:13.8311510Z Requirement already satisfied: requests>=2.21.0 in /usr/lib/python3/dist-packages (from azure-core>=1.30.0->azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (2.31.0)
+2025-09-28T19:44:13.8320763Z Requirement already satisfied: six>=1.11.0 in /usr/lib/python3/dist-packages (from azure-core>=1.30.0->azure-storage-blob->-r modules/lambda/MonitorLambda/requirements.txt (line 2)) (1.16.0)
+2025-09-28T19:44:13.8482400Z Downloading azure_storage_blob-12.26.0-py3-none-any.whl (412 kB)
+2025-09-28T19:44:13.8832888Z Downloading azure_core-1.35.1-py3-none-any.whl (211 kB)
+2025-09-28T19:44:13.8976348Z Downloading isodate-0.7.2-py3-none-any.whl (22 kB)
+2025-09-28T19:44:13.9772183Z Installing collected packages: isodate, azure-core, azure-storage-blob
+2025-09-28T19:44:14.3472016Z 
+2025-09-28T19:44:14.3479828Z Successfully installed azure-core-1.35.1 azure-storage-blob-12.26.0 isodate-0.7.2
+2025-09-28T19:44:20.0367585Z Error retrieving secret: An error occurred (UnrecognizedClientException) when calling the GetSecretValue operation: The security token included in the request is invalid.
+2025-09-28T19:44:20.0628524Z Traceback (most recent call last):
+2025-09-28T19:44:20.0629000Z   File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 125, in <module>
+2025-09-28T19:44:20.0629711Z     lambda_handler()
+2025-09-28T19:44:20.0630601Z   File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 114, in lambda_handler
+2025-09-28T19:44:20.0631364Z     secret = get_secret()
+2025-09-28T19:44:20.0632365Z              ^^^^^^^^^^^^
+2025-09-28T19:44:20.0633276Z   File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 40, in get_secret
+2025-09-28T19:44:20.0634071Z     response = secrets_client.get_secret_value(SecretId=SECRET_NAME)
+2025-09-28T19:44:20.0634913Z                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-09-28T19:44:20.0635782Z   File "/usr/lib/python3/dist-packages/botocore/client.py", line 553, in _api_call
+2025-09-28T19:44:20.0736821Z     return self._make_api_call(operation_name, kwargs)
+2025-09-28T19:44:20.0738083Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-09-28T19:44:20.0738997Z   File "/usr/lib/python3/dist-packages/botocore/client.py", line 1009, in _make_api_call
+2025-09-28T19:44:20.0741328Z     raise error_class(parsed_response, operation_name)
+2025-09-28T19:44:20.0742533Z botocore.exceptions.ClientError: An error occurred (UnrecognizedClientException) when calling the GetSecretValue operation: The security token included in the request is invalid.
+2025-09-28T19:44:20.1477170Z 
+2025-09-28T19:44:20.1513472Z ##[error]Bash exited with code '1'.
+2025-09-28T19:44:20.1541327Z ##[section]Finishing: Run Daily Monitor Lambda
