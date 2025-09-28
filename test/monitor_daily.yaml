@@ -1,0 +1,36 @@
+trigger: none
+
+schedules:
+  - cron: "0 8 * * *"   # Daily 8 AM UTC
+    always: true
+    displayName: "Daily File Monitoring"
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  S3_UAT_BUCKET: "aabackstop-uat"
+  S3_PROD_BUCKET: "aabackstop-prod"
+  AZURE_CONTAINER_UAT: "uat"
+  AZURE_CONTAINER_PROD: "prod"
+  EMAIL_TO: "ROAD_Ops_L2_Support@theaa.com"
+  SECRET_NAME: "azneprod"
+  AWS_REGION: "eu-west-1"
+  MODE: "daily"
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: "3.x"
+
+- script: |
+    pip install -r modules/lambda/MonitorLambda/requirements.txt
+    python modules/lambda/MonitorLambda/monitor_lambda.py
+  displayName: "Run Daily Monitor"
+
+- task: SendEmail@1
+  condition: failed()
+  inputs:
+    To: "$(EMAIL_TO)"
+    Subject: "❌ Daily File Transfer Validation Failed"
+    Body: "One or more expected files are missing from S3 or Azure Blob. Please investigate."
