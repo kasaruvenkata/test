@@ -1,13 +1,27 @@
+# Monitor Lambda - Daily validation (files + size check)
+# Trigger only on monitor branch
+
 trigger:
   branches:
     include:
       - monitor
 
 # schedule:
-# - cron: "0 7 * * *"  # Daily 7 AM UTC (commented for now)
+# - cron: "0 7 * * *"   # Daily 7 AM UTC (commented, configure once working)
+#   displayName: Daily Monitor
+#   branches:
+#     include:
+#       - monitor
+#   always: true
 
 pool:
   vmImage: ubuntu-latest
+
+variables:
+  - name: monitorImageName
+    value: 'aa-monitorlambda'
+  - name: repositoryName
+    value: ${{ format('{0}-ecr', parameters.environment) }}
 
 parameters:
   - name: environment
@@ -17,64 +31,49 @@ parameters:
       - uat
       - prod
 
-name: '$(Date:yyyyMMdd)$(Rev:.r) Monitor Daily - ${{ parameters.environment }}'
-
-variables:
-  SECRET_NAME: "azneprod"
-  AWS_REGION: "eu-west-1"
-  MODE: "daily"
-  EMAIL_TO: "venkata.kasaru@theaa.com"
+name: '$(Date:yyyyMMdd)$(Rev:.r) $(Build.DefinitionName) - Daily Monitoring ${{ parameters.environment }}'
 
 steps:
+# 1️⃣ Install Docker
 - task: DockerInstaller@0
   displayName: 'Install Docker'
 
+# 2️⃣ Build Docker Image
 - task: Docker@2
   displayName: 'Monitor Lambda - Build Docker Image'
   inputs:
     command: build
-    repository: 'aa-monitorlambda'
+    repository: $(monitorImageName)
     Dockerfile: 'modules/lambda/MonitorLambda/Dockerfile'
     buildContext: 'modules/lambda/MonitorLambda'
     tags: |
       $(Build.BuildId)
     arguments: |
-      --build-arg ENV=${{ parameters.environment }}
+      --build-arg S3_BUCKET=aabackstop-${{parameters.environment}}
 
+# 3️⃣ Push Docker Image to ECR
 - task: ECRPushImage@1
   displayName: 'Monitor Lambda - Push image to ECR'
   inputs:
     awsCredentials: ${{ format('AWS-ECR-{0}', parameters.environment) }}
     regionName: 'eu-west-1'
     imageSource: 'imagename'
-    sourceImageName: 'aa-monitorlambda'
-    sourceImageTag: '$(Build.BuildId)'
-    repositoryName: ${{ format('{0}-ecr', parameters.environment) }}
-    pushTag: 'monitorlambda'
+    sourceImageName: $(monitorImageName)
+    sourceImageTag: $(Build.BuildId)
+    repositoryName: $(repositoryName)
+    pushTag: |
+      monitorlambda
 
-# ==============================
-# Run the Monitor Lambda Python script using the same AWS credentials
-# ==============================
+# 4️⃣ Run Lambda Container for Daily Validation
 - script: |
-    pip install --upgrade pip
-    pip install -r modules/lambda/MonitorLambda/requirements.txt
-
-    python modules/lambda/MonitorLambda/monitor_lambda.py
-  displayName: "Run Daily Monitor Lambda"
-  env:
-    ENV: ${{ parameters.environment }}
-    MODE: daily
-    AWS_DEFAULT_REGION: $(AWS_REGION)
-    AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
-    AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
-
-
-- task: SendEmail@1
-  condition: failed()
-  inputs:
-    To: "$(EMAIL_TO)"
-    Subject: "❌ Daily File Validation Failed - ${{ parameters.environment }}"
-    Body: |
-      Daily File Transfer Validation Report for environment: ${{ parameters.environment }}.
-      Check the pipeline logs for detailed missing or zero-size file list.
-
+    echo "🚀 Running Monitor Lambda for daily validation..."
+    docker run --rm \
+      -e SECRET_NAME='azneprod' \
+      -e AWS_REGION='eu-west-1' \
+      -e AZURE_CONTAINER_UAT='uat' \
+      -e AZURE_CONTAINER_PROD='prod' \
+      -e S3_UAT_BUCKET='aabackstop-uat' \
+      -e S3_PROD_BUCKET='aabackstop-prod' \
+      -e MODE='daily' \
+      $(monitorImageName):$(Build.BuildId)
+  displayName: 'Run Monitor Lambda - Validate files & size'
