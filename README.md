@@ -12,52 +12,29 @@ Fully parameterized by environment (ENV=uat/prod) for pipeline selection.
 
 
 Purpose
+✅ Key Features
 
-Validate that all expected files are successfully copied from Azure Blob Storage → AWS S3 for today’s date.
+Environment parameter (ENV)
 
-Send an email alert if any file is missing, so the Ops team can investigate immediately.
+You can choose UAT or PROD at pipeline trigger time.
 
-Pipeline Outline
+Lambda uses this to select correct S3 bucket and Azure container.
 
-Trigger
+Daily Validation
 
-Runs on the monitor branch (manual trigger by default, cron commented).
+Checks both existence and file size.
 
-Environment Variables / Secrets
+Reports all missing or zero-size files in the email.
 
-S3_UAT_BUCKET / S3_PROD_BUCKET → AWS S3 bucket names.
+Email Alerts
 
-AZURE_CONTAINER_UAT / AZURE_CONTAINER_PROD → Azure Blob container names.
+Only sent if validation fails (condition: failed()).
 
-SECRET_NAME → AWS Secrets Manager key storing Azure connection string.
+Recipient: venkata.kasaru@theaa.com.
 
-AWS_REGION → Region for AWS operations.
+Reusability
 
-MODE=daily → Tells the Lambda code to perform daily validation.
-
-Build Docker Image
-
-Uses Dockerfile in modules/lambda/MonitorLambda/.
-
-Builds an image with all Python dependencies (boto3, azure-storage-blob).
-
-Push Docker Image to ECR
-
-Tags image as monitorlambda.
-
-Pushes to AWS ECR (separate repos for uat / prod).
-
-Run Daily Monitor (Lambda code inside container)
-
-monitor_lambda.py connects to Azure Blob & S3.
-
-Checks if today’s files exist:
-
-TXT files: indoor_users_YYYYMMDD_*.txt
-
-ZIP files: Oracle/AABS-YYYY-MM-DD.zip
-
-If any file is missing → exits with failure.
+Same Docker image can be used for multiple environments.
 
 ===================================================================================================
 2️⃣ monitor_weekly.yml – Weekly Summary
