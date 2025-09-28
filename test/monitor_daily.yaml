@@ -52,7 +52,20 @@ steps:
     repositoryName: ${{ format('{0}-ecr', parameters.environment) }}
     pushTag: 'monitorlambda'
 
+# ==============================
+# Configure AWS Credentials for boto3
+# ==============================
+- task: AWSCLI@1
+  displayName: 'Configure AWS Credentials'
+  inputs:
+    awsCredentials: ${{ format('AWS-ECR-{0}', parameters.environment) }}
+    regionName: 'eu-west-1'
+
+# ==============================
+# Run the Monitor Lambda Python script
+# ==============================
 - script: |
+    pip install --upgrade pip
     pip install -r modules/lambda/MonitorLambda/requirements.txt
     export ENV=${{ parameters.environment }}
     export MODE=daily
