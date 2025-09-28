@@ -7,14 +7,6 @@ trigger:
     include:
       - monitor
 
-# schedule:
-# - cron: "0 7 * * *"   # Daily 7 AM UTC (commented, configure once working)
-#   displayName: Daily Monitor
-#   branches:
-#     include:
-#       - monitor
-#   always: true
-
 pool:
   vmImage: ubuntu-latest
 
@@ -26,13 +18,17 @@ parameters:
       - uat
       - prod
 
+# Variables
 variables:
   - name: monitorImageName
     value: 'aa-monitorlambda'
   - name: repositoryName
     value: ${{ format('{0}-ecr', parameters.environment) }}
 
-name: '$(Date:yyyyMMdd)$(Rev:.r) $(Build.DefinitionName) - Daily Monitoring ${{ parameters.environment }}'
+# Dynamically link AWS variable group based on environment
+# Azure DevOps does not support dynamic variable group selection, so we use condition
+# We'll define two groups and use conditional steps to set AWS credentials
+# The Docker run step will pick $(AWS_ACCESS_KEY_ID) / $(AWS_SECRET_ACCESS_KEY)
 
 steps:
 
@@ -66,7 +62,13 @@ steps:
     pushTag: |
       monitorlambda
 
-# 4️⃣ Run Lambda Container for Daily Validation
+# 4️⃣ Set AWS credentials based on environment
+- ${{ if eq(parameters.environment, 'uat') }}:
+  - group: uat-aws-credentials
+- ${{ if eq(parameters.environment, 'prod') }}:
+  - group: prod-aws-credentials
+
+# 5️⃣ Run Lambda Container for Daily Validation
 - script: |
     echo "🚀 Running Monitor Lambda for daily validation for environment: ${{ parameters.environment }}"
 
