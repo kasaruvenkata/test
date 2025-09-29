@@ -10,46 +10,39 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-parameters:
-  - name: environment
-    type: string
-    default: 'uat'
-    values:
-      - uat
-      - prod
-
-# Variables
 variables:
   - name: monitorImageName
     value: 'aa-monitorlambda'
   - name: repositoryName
     value: ${{ format('{0}-ecr', parameters.environment) }}
 
-# Dynamically link AWS variable group based on environment
-# Azure DevOps does not support dynamic variable group selection, so we use condition
-# We'll define two groups and use conditional steps to set AWS credentials
-# The Docker run step will pick $(AWS_ACCESS_KEY_ID) / $(AWS_SECRET_ACCESS_KEY)
+parameters:
+  - name: environment
+    type: string
+    default: 'uat'
+    values:
+     - uat
+     - prod
+
+name: '$(Date:yyyyMMdd)$(Rev:.r) Monitor Lambda - ${{ parameters.environment }} environment'
 
 steps:
-
-# 1️⃣ Install Docker
 - task: DockerInstaller@0
   displayName: 'Install Docker'
 
-# 2️⃣ Build Docker Image
+# Build Monitor Lambda Docker Image
 - task: Docker@2
   displayName: 'Monitor Lambda - Build Docker Image'
   inputs:
     command: build
     repository: $(monitorImageName)
-    Dockerfile: 'modules/lambda/MonitorLambda/Dockerfile'
-    buildContext: 'modules/lambda/MonitorLambda'
+    Dockerfile: '**/modules/lambda/MonitorLambda/Dockerfile'
     tags: |
       $(Build.BuildId)
     arguments: |
       --build-arg S3_BUCKET=aabackstop-${{parameters.environment}}
 
-# 3️⃣ Push Docker Image to ECR
+# Push Monitor Lambda image to ECR
 - task: ECRPushImage@1
   displayName: 'Monitor Lambda - Push image to ECR'
   inputs:
@@ -62,25 +55,31 @@ steps:
     pushTag: |
       monitorlambda
 
-# 4️⃣ Set AWS credentials based on environment
-- ${{ if eq(parameters.environment, 'uat') }}:
-  - group: uat-aws-credentials
-- ${{ if eq(parameters.environment, 'prod') }}:
-  - group: prod-aws-credentials
-
-# 5️⃣ Run Lambda Container for Daily Validation
+# Run Monitor Lambda Validation
 - script: |
-    echo "🚀 Running Monitor Lambda for daily validation for environment: ${{ parameters.environment }}"
+    echo "Running Monitor Lambda Validation for environment ${{ parameters.environment }}"
+    python modules/lambda/MonitorLambda/monitor_lambda.py
+  displayName: 'Run File Validation (Monitor Lambda)'
+  env:
+    SECRET_NAME: "azneprod"
+    AWS_REGION: "eu-west-1"
+    AZURE_CONTAINER_UAT: "uat"
+    AZURE_CONTAINER_PROD: "prod"
+    S3_UAT_BUCKET: "aabackstop-uat"
+    S3_PROD_BUCKET: "aabackstop-prod"
+    MODE: "daily"
+    EMAIL_TO: "ROAD_Ops_L2_Support@theaa.com"
 
-    docker run --rm \
-      -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
-      -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
-      -e AWS_REGION='eu-west-1' \
-      -e SECRET_NAME='azneprod' \
-      -e AZURE_CONTAINER_UAT='uat' \
-      -e AZURE_CONTAINER_PROD='prod' \
-      -e S3_UAT_BUCKET='aabackstop-uat' \
-      -e S3_PROD_BUCKET='aabackstop-prod' \
-      -e MODE='daily' \
-      $(monitorImageName):$(Build.BuildId)
-  displayName: 'Run Monitor Lambda - Validate files & size'
+# # (Optional) Send email using AWS SES if pipeline fails
+# - task: PowerShell@2
+#   displayName: 'Send Email on Failure'
+#   condition: failed()
+#   inputs:
+#     targetType: 'inline'
+#     script: |
+#       Write-Host "Pipeline failed. Sending email alert..."
+#       aws ses send-email `
+#         --region eu-west-1 `
+#         --from "noreply@theaa.com" `
+#         --destination "ToAddresses=ROAD_Ops_L2_Support@theaa.com" `
+#         --message "Subject={Data=Daily Monitor Lambda Failed},Body={Text={Data=One or more files missing or size mismatched in ${{ parameters.environment }}. Please check the logs.}}"
