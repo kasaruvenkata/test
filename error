@@ -1,26 +1,10 @@
-
-Generating script.
 ========================== Starting Command Output ===========================
-/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/0a47d627-c1a2-42df-9f8a-78b78628f5e1.sh
-Defaulting to user installation because normal site-packages is not writeable
-Collecting azure-storage-blob
-  Downloading azure_storage_blob-12.26.0-py3-none-any.whl.metadata (26 kB)
-Requirement already satisfied: boto3 in /usr/lib/python3/dist-packages (1.34.46)
-Collecting azure-core>=1.30.0 (from azure-storage-blob)
-  Downloading azure_core-1.35.1-py3-none-any.whl.metadata (46 kB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.5/46.5 kB 4.7 MB/s eta 0:00:00
-Requirement already satisfied: cryptography>=2.1.4 in /usr/lib/python3/dist-packages (from azure-storage-blob) (41.0.7)
-Requirement already satisfied: typing-extensions>=4.6.0 in /usr/lib/python3/dist-packages (from azure-storage-blob) (4.10.0)
-Collecting isodate>=0.6.1 (from azure-storage-blob)
-  Downloading isodate-0.7.2-py3-none-any.whl.metadata (11 kB)
-Requirement already satisfied: requests>=2.21.0 in /usr/lib/python3/dist-packages (from azure-core>=1.30.0->azure-storage-blob) (2.31.0)
-Requirement already satisfied: six>=1.11.0 in /usr/lib/python3/dist-packages (from azure-core>=1.30.0->azure-storage-blob) (1.16.0)
-Downloading azure_storage_blob-12.26.0-py3-none-any.whl (412 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 412.9/412.9 kB 15.3 MB/s eta 0:00:00
-Downloading azure_core-1.35.1-py3-none-any.whl (211 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 211.8/211.8 kB 70.9 MB/s eta 0:00:00
-Downloading isodate-0.7.2-py3-none-any.whl (22 kB)
-Installing collected packages: isodate, azure-core, azure-storage-blob
-Successfully installed azure-core-1.35.1 azure-storage-blob-12.26.0 isodate-0.7.2
-[MonitorLambda] Starting validation for PROD
-[MonitorLambda] ❌ Validation failed: 'NoneType' object has no attribute 'rstrip'
+/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/3943c2ca-a959-4f74-84f7-b2a86034c459.sh
+🔍 Running daily sync validation...
+Traceback (most recent call last):
+  File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 2, in <module>
+    from azure.storage.blob import ContainerClient
+ModuleNotFoundError: No module named 'azure'
+
+##[error]Bash exited with code '1'.
+Finishing: Run Daily Monitor Script
