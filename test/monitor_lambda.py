@@ -17,8 +17,9 @@ logging.basicConfig(
 
 # ENV
 SECRET_NAME = "azneprod"
-AZURE_CONTAINER = os.getenv("AZURE_CONTAINER")
+AZURE_CONTAINER = "azneprodstaabackstop"
 S3_BUCKET = os.getenv("S3_BUCKET")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "uat")  # 'uat' or 'prod'
 MODE = os.getenv("MODE", "daily")
 
 secrets_client = boto3.client("secretsmanager")
@@ -32,10 +33,10 @@ def get_secret():
         logging.error(f"Error retrieving secret: {e}")
         raise
 
-def get_azure_blobs(connection_string):
+def get_azure_blobs(connection_string, prefix):
     blob_service_client = BlobServiceClient.from_connection_string(conn_str=connection_string)
     container_client = blob_service_client.get_container_client(AZURE_CONTAINER)
-    blobs = container_client.list_blobs()
+    blobs = container_client.list_blobs(name_starts_with=prefix)
     return {blob.name: blob.size for blob in blobs}
 
 def get_s3_objects():
@@ -54,11 +55,12 @@ def compare_blobs(azure_blobs, s3_objects):
     return mismatches
 
 def main():
-    logging.info(f"🔍 Starting {MODE.upper()} sync validation...")
+    logging.info(f"🔍 Starting {MODE.upper()} sync validation for {ENVIRONMENT.upper()}...")
     secret = get_secret()
     connection_string = secret["connection_string"]
+    prefix = f"{ENVIRONMENT}/"
 
-    azure_blobs = get_azure_blobs(connection_string)
+    azure_blobs = get_azure_blobs(connection_string, prefix)
     s3_objects = get_s3_objects()
     mismatches = compare_blobs(azure_blobs, s3_objects)
 
