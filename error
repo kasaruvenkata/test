@@ -1,3 +1,15 @@
+azuredevops library group variables
+uat-aws-credentials
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+
+
+connection_string
+
+
+see if we can fix this these values from working script lambda_function.py
+
+
 Starting: Run Daily Monitor Script in Docker
 ==============================================================================
 Task         : Command line
