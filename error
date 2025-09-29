@@ -1,9 +1,19 @@
-Run Monitor Lambda - Validate files & size 
-error:
-/home/vsts/work/_temp/a2b0b469-2475-44d8-8240-dc09276a8d2b.sh: line 3: ***_ACCESS_KEY_ID: command not found
-/home/vsts/work/_temp/a2b0b469-2475-44d8-8240-dc09276a8d2b.sh: line 3: ***_SECRET_ACCESS_KEY: command not found
-28 Sep 2025 20:34:16,484 [INFO] (rapid) exec '/var/runtime/bootstrap' (cwd=/var/task, handler=)
+Starting: Run File Validation (Monitor Lambda)
+==============================================================================
+Task         : Command line
+Description  : Run a command line script using Bash on Linux and macOS and cmd.exe on Windows
+Version      : 2.250.1
+Author       : Microsoft Corporation
+Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/command-line
+==============================================================================
+Generating script.
+========================== Starting Command Output ===========================
+/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/ac6bafbf-2a90-44b6-882a-1f0f02552609.sh
+Running Monitor Lambda Validation for environment prod
+Traceback (most recent call last):
+  File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 3, in <module>
+    from azure.storage.blob import BlobServiceClient
+ModuleNotFoundError: No module named 'azure'
 
-i have vairable group these values are given "uat-aws-credentials" :
-AWS_ACCESS_KEY_ID 
-AWS_SECRET_ACCESS_KEY
+##[error]Bash exited with code '1'.
+Finishing: Run File Validation (Monitor Lambda)
