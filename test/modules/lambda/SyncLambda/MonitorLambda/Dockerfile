@@ -11,7 +11,8 @@ ENV S3_BUCKET=${S3_BUCKET}
 COPY requirements.txt .
 RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
 
-COPY monitor_sync.py .
+COPY monitor_lambda.py .
 
 # Command to run the Lambda function
-CMD ["monitor_sync.main"]
+CMD ["monitor_lambda.main"]
+
