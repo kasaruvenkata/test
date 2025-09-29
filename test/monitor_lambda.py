@@ -1,70 +1,83 @@
-import boto3
 import os
+import sys
+from datetime import datetime
 from azure.storage.blob import BlobServiceClient
-from botocore.exceptions import ClientError
+import boto3
 
-# ENV
-SECRET_NAME = "azneprod"   # from AWS Secrets Manager
-AZURE_CONTAINER = os.getenv("AZURE_CONTAINER", "uat")
-S3_BUCKET = os.getenv("S3_BUCKET")
-ALERT_EMAIL = "ROAD_Ops_L2_Support@theaa.com"
+def log(msg):
+    print(f"[MonitorLambda] {msg}")
 
-secrets_client = boto3.client("secretsmanager")
-s3_client = boto3.client("s3")
-ses_client = boto3.client("ses", region_name="eu-west-1")
+def get_expected_filename(prefix: str) -> str:
+    """Generate expected filename based on today's date."""
+    today = datetime.now().strftime("%d%m%Y")
+    return f"{prefix}{today}.txt"
 
-def get_secret():
-    try:
-        response = secrets_client.get_secret_value(SecretId=SECRET_NAME)
-        return eval(response["SecretString"])
-    except ClientError as e:
-        print(f"❌ Error retrieving secret: {e}")
-        raise
+def get_blob_file_size(connection_string: str, container: str, blob_name: str) -> int:
+    """Fetch size of a blob file from Azure Blob Storage."""
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    blob_client = blob_service_client.get_blob_client(container=container, blob=blob_name)
+    props = blob_client.get_blob_properties()
+    return props.size
 
-def send_email(subject, body):
-    try:
-        response = ses_client.send_email(
-            Source="noreply@theaa.com",  # must be verified in SES
-            Destination={"ToAddresses": [ALERT_EMAIL]},
-            Message={
-                "Subject": {"Data": subject},
-                "Body": {"Text": {"Data": body}}
-            }
+def get_s3_file_size(bucket: str, key: str, aws_region: str = "us-east-1") -> int:
+    """Fetch size of a file from S3."""
+    s3 = boto3.client("s3", region_name=aws_region)
+    response = s3.head_object(Bucket=bucket, Key=key)
+    return response["ContentLength"]
+
+def validate_file_transfer(env: str):
+    """
+    Validate that files exist in both Azure Blob and AWS S3
+    and their sizes match.
+    """
+    log(f"Starting validation for {env.upper()}")
+
+    # 🔹 Environment variables for Azure & AWS
+    azure_conn_str = os.getenv(f"AZURE_STORAGE_CONNECTION_STRING_{env.upper()}")
+    azure_container = os.getenv(f"AZURE_CONTAINER_{env.upper()}")
+    aws_bucket = os.getenv(f"AWS_BUCKET_{env.upper()}")
+    file_prefix = os.getenv("FILE_PREFIX", "myhr")
+
+    # 🔹 Expected file name
+    filename = get_expected_filename(file_prefix)
+
+    # 🔹 Validate .txt file
+    azure_blob = f"{env}/{filename}"     # e.g., uat/myhrDDMMYYYY.txt
+    s3_key = f"{filename}"              # e.g., myhrDDMMYYYY.txt
+
+    azure_size = get_blob_file_size(azure_conn_str, azure_container, azure_blob)
+    aws_size = get_s3_file_size(aws_bucket, s3_key)
+
+    if azure_size != aws_size:
+        raise Exception(
+            f"File size mismatch for {filename} → Azure={azure_size} vs AWS={aws_size}"
         )
-        print(f"📧 Alert email sent: {response['MessageId']}")
-    except Exception as e:
-        print(f"❌ Error sending email: {e}")
 
-def lambda_handler(event, context):
-    secret = get_secret()
-    connection_string = secret["connection_string"]
+    log(f"✅ Validation successful for {filename}, Size={aws_size} bytes")
 
-    blob_service_client = BlobServiceClient.from_connection_string(conn_str=connection_string)
-    container_client = blob_service_client.get_container_client(AZURE_CONTAINER)
+    # 🔹 Validate Oracle .zip file
+    oracle_filename = f"Oracle/{env}_oracle_{datetime.now().strftime('%d%m%Y')}.zip"
+    azure_oracle_blob = f"{env}/{oracle_filename}"
+    s3_oracle_key = oracle_filename
 
-    print(f"🔎 Validating blobs in container '{AZURE_CONTAINER}' against S3 bucket '{S3_BUCKET}'")
+    azure_oracle_size = get_blob_file_size(azure_conn_str, azure_container, azure_oracle_blob)
+    aws_oracle_size = get_s3_file_size(aws_bucket, s3_oracle_key)
 
-    mismatches = []
-    for blob in container_client.list_blobs():
-        blob_name = blob.name
-        blob_size = blob.size
-        print(f"Found blob: {blob_name} ({blob_size} bytes)")
+    if azure_oracle_size != aws_oracle_size:
+        raise Exception(
+            f"Oracle ZIP mismatch → Azure={azure_oracle_size} vs AWS={aws_oracle_size}"
+        )
 
-        try:
-            s3_object = s3_client.head_object(Bucket=S3_BUCKET, Key=blob_name)
-            s3_size = s3_object["ContentLength"]
-
-            if s3_size != blob_size:
-                mismatches.append(f"❌ Size mismatch: {blob_name} | Blob={blob_size} | S3={s3_size}")
-        except ClientError:
-            mismatches.append(f"❌ Missing in S3: {blob_name}")
-
-    if mismatches:
-        subject = f"[ALERT] File Validation Failed in {S3_BUCKET}"
-        body = "\n".join(mismatches)
-        send_email(subject, body)
-    else:
-        print("✅ All files validated successfully. Sizes match.")
+    log(f"✅ Validation successful for {oracle_filename}, Size={aws_oracle_size} bytes")
 
 if __name__ == "__main__":
-    lambda_handler({}, {})
+    if len(sys.argv) < 2:
+        print("Usage: python monitor_lambda.py <env>")
+        sys.exit(1)
+
+    env = sys.argv[1]
+    try:
+        validate_file_transfer(env)
+    except Exception as e:
+        log(f"❌ Validation failed: {e}")
+        sys.exit(1)
