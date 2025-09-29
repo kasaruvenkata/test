@@ -56,6 +56,16 @@ steps:
       monitorlambda
 
 - script: |
+    echo "🔍 Debugging AWS credentials..."
+    echo "AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID"
+    echo "AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:0:4}********"
+  displayName: 'Debug AWS Credentials'
+  env:
+    AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+    AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+
+
+- script: |
     echo "🔍 Running daily sync validation inside Docker..."
     docker run --rm \
       -e AWS_ACCESS_KEY_ID \
@@ -81,4 +91,5 @@ steps:
     PathtoPublish: 'modules/lambda/MonitorLambda/sync_log.txt'
     ArtifactName: 'SyncLog'
     publishLocation: 'Container'
+
 
