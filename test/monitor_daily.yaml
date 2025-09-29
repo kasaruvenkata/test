@@ -58,14 +58,21 @@ steps:
 - script: |
     echo "🔍 Running daily sync validation inside Docker..."
     docker run --rm \
-      -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
-      -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
-      -e AZURE_CONTAINER="uat" \
-      -e S3_BUCKET="aabackstop-${{ parameters.environment }}" \
-      -e MODE="daily" \
+      -e AWS_ACCESS_KEY_ID \
+      -e AWS_SECRET_ACCESS_KEY \
+      -e ENVIRONMENT \
+      -e S3_BUCKET \
+      -e MODE \
       -v $(System.DefaultWorkingDirectory)/modules/lambda/MonitorLambda:/var/task \
       aa-monitorlambda:$(Build.BuildId)
   displayName: 'Run Daily Monitor Script in Docker'
+  env:
+    AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+    AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+    ENVIRONMENT: ${{ parameters.environment }}
+    S3_BUCKET: aabackstop-${{ parameters.environment }}
+    MODE: daily
+
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Sync Log Artifact'
@@ -74,3 +81,4 @@ steps:
     PathtoPublish: 'modules/lambda/MonitorLambda/sync_log.txt'
     ArtifactName: 'SyncLog'
     publishLocation: 'Container'
+
