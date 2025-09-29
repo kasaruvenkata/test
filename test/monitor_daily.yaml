@@ -3,13 +3,13 @@ trigger:
     include:
       - monitor
 
-schedules:
-  - cron: "0 7 * * *"  # Runs daily at 7 AM UTC
-    displayName: Daily Monitor
-    branches:
-      include:
-        - monitor
-    always: true
+# schedules:
+#   - cron: "0 7 * * *"  # Runs daily at 7 AM UTC
+#     displayName: Daily Monitor
+#     branches:
+#       include:
+#         - monitor
+#     always: true
 
 pool:
   vmImage: ubuntu-latest
@@ -56,15 +56,15 @@ steps:
       monitorlambda
 
 - script: |
-    echo "🔍 Running daily sync validation..."
-    python3 monitor_sync.py
-  displayName: 'Run Daily Monitor Script'
-  workingDirectory: modules/lambda/MonitorLambda
-  env:
-    AZURE_CONN_STR: $(AZURE_CONN_STR)
-    AZURE_CONTAINER: $(AZURE_CONTAINER)
-    S3_BUCKET: aabackstop-${{ parameters.environment }}
-    MODE: daily
+    echo "🔍 Running daily sync validation inside Docker..."
+    docker run --rm \
+      -e AZURE_CONN_STR="$(AZURE_CONN_STR)" \
+      -e AZURE_CONTAINER="$(AZURE_CONTAINER)" \
+      -e S3_BUCKET="aabackstop-${{ parameters.environment }}" \
+      -e MODE="daily" \
+      -v $(System.DefaultWorkingDirectory)/modules/lambda/MonitorLambda:/var/task \
+      aa-monitorlambda:$(Build.BuildId)
+  displayName: 'Run Daily Monitor Script in Docker'
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Sync Log Artifact'
