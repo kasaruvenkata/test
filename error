@@ -1,10 +1,15 @@
+Starting: Run Daily Monitor Script in Docker
+==============================================================================
+Task         : Command line
+Description  : Run a command line script using Bash on Linux and macOS and cmd.exe on Windows
+Version      : 2.250.1
+Author       : Microsoft Corporation
+Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/command-line
+==============================================================================
+Generating script.
 ========================== Starting Command Output ===========================
-/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/3943c2ca-a959-4f74-84f7-b2a86034c459.sh
-🔍 Running daily sync validation...
-Traceback (most recent call last):
-  File "/home/vsts/work/1/s/modules/lambda/MonitorLambda/monitor_lambda.py", line 2, in <module>
-    from azure.storage.blob import ContainerClient
-ModuleNotFoundError: No module named 'azure'
-
-##[error]Bash exited with code '1'.
-Finishing: Run Daily Monitor Script
+/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/641974b4-df44-43a8-ad2c-de6a7918a03e.sh
+🔍 Running daily sync validation inside Docker...
+/home/vsts/work/_temp/641974b4-df44-43a8-ad2c-de6a7918a03e.sh: line 2: AZURE_CONN_STR: command not found
+/home/vsts/work/_temp/641974b4-df44-43a8-ad2c-de6a7918a03e.sh: line 2: AZURE_CONTAINER: command not found
+29 Sep 2025 07:25:07,274 [INFO] (rapid) exec '/var/runtime/bootstrap' (cwd=/var/task, handler=)
