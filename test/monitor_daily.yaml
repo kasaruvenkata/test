@@ -4,7 +4,7 @@ trigger:
       - monitor
 
 # schedules:
-#   - cron: "0 7 * * *"
+#   - cron: "0 7 * * *"  # Runs daily at 7 AM UTC
 #     displayName: Daily Monitor
 #     branches:
 #       include:
@@ -23,66 +23,45 @@ parameters:
      - prod
 
 variables:
-  - name: monitorImageName
-    value: 'aa-monitorlambda'
-  - name: repositoryName
-    value: ${{ format('{0}-ecr', parameters.environment) }}
+  - name: S3_BUCKET
+    value: ${{ format('aabackstop-{0}', parameters.environment) }}
+  - name: ENVIRONMENT
+    value: ${{ parameters.environment }}
+
+# Link variable group based on environment
+- ${{ if eq(parameters.environment, 'uat') }}:
+  - group: uat-aws-credentials
+
+- ${{ if eq(parameters.environment, 'prod') }}:
+  - group: prod-aws-credentials
 
 steps:
-- task: DockerInstaller@0
-  displayName: 'Install Docker'
-
-- task: Docker@2
-  displayName: 'Build Monitor Lambda Image'
+- task: UsePythonVersion@0
   inputs:
-    command: build
-    repository: $(monitorImageName)
-    Dockerfile: 'modules/lambda/MonitorLambda/Dockerfile'
-    tags: |
-      $(Build.BuildId)
-    arguments: |
-      --build-arg S3_BUCKET=aabackstop-${{ parameters.environment }}
-
-- task: ECRPushImage@1
-  displayName: 'Push Monitor Lambda to ECR'
-  inputs:
-    awsCredentials: ${{ format('AWS-ECR-{0}', parameters.environment) }}
-    regionName: 'eu-west-1'
-    imageSource: 'imagename'
-    sourceImageName: $(monitorImageName)
-    sourceImageTag: $(Build.BuildId)
-    repositoryName: $(repositoryName)
-    pushTag: |
-      monitorlambda
+    versionSpec: '3.11'
+    addToPath: true
+  displayName: 'Use Python 3.11'
 
 - script: |
-    echo "🔍 Debugging AWS credentials..."
-    echo "AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID"
+    python3 -m pip install --upgrade pip
+    pip3 install boto3 azure-storage-blob
+  displayName: 'Install Python Dependencies'
+
+- script: |
+    echo "🔍 Running daily sync validation..."
+    echo "ENVIRONMENT: $ENVIRONMENT"
+    echo "S3_BUCKET: $S3_BUCKET"
+    echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:0:4}********"
     echo "AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:0:4}********"
-  displayName: 'Debug AWS Credentials'
+    python3 monitor_lambda.py
+  displayName: 'Run Daily Monitor Script'
+  workingDirectory: modules/lambda/MonitorLambda
   env:
     AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
     AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
-
-
-- script: |
-    echo "🔍 Running daily sync validation inside Docker..."
-    docker run --rm \
-      -e AWS_ACCESS_KEY_ID \
-      -e AWS_SECRET_ACCESS_KEY \
-      -e ENVIRONMENT \
-      -e S3_BUCKET \
-      -e MODE \
-      -v $(System.DefaultWorkingDirectory)/modules/lambda/MonitorLambda:/var/task \
-      aa-monitorlambda:$(Build.BuildId)
-  displayName: 'Run Daily Monitor Script in Docker'
-  env:
-    AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
-    AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
-    ENVIRONMENT: ${{ parameters.environment }}
-    S3_BUCKET: aabackstop-${{ parameters.environment }}
+    ENVIRONMENT: $(ENVIRONMENT)
+    S3_BUCKET: $(S3_BUCKET)
     MODE: daily
-
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Sync Log Artifact'
@@ -91,5 +70,3 @@ steps:
     PathtoPublish: 'modules/lambda/MonitorLambda/sync_log.txt'
     ArtifactName: 'SyncLog'
     publishLocation: 'Container'
-
-
