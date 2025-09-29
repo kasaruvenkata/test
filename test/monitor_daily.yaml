@@ -3,13 +3,13 @@ trigger:
     include:
       - monitor
 
-schedules:
-  - cron: "0 7 * * *"
-    displayName: Daily Monitor
-    branches:
-      include:
-        - monitor
-    always: true
+# schedules:
+#   - cron: "0 7 * * *"
+#     displayName: Daily Monitor
+#     branches:
+#       include:
+#         - monitor
+#     always: true
 
 pool:
   vmImage: ubuntu-latest
@@ -56,7 +56,7 @@ steps:
       monitorlambda
 
 - script: |
-    echo "🔍 Running daily sync validation..."
+    echo " Running daily sync validation..."
     python3 monitor_sync.py
   displayName: 'Run Daily Monitor Script'
   workingDirectory: monitor
