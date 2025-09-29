@@ -54,5 +54,6 @@ def main():
     else:
         logging.info("✅ All files match between Azure and S3.")
 
-if __name__ == "__main__":
+# Lambda-compatible entry point
+def lambda_handler(event, context):
     main()
