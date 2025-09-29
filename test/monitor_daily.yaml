@@ -1,20 +1,18 @@
-# Monitor Lambda - Daily validation (files + size check)
-# Parameterized for environment: UAT or PROD
-# Trigger only on monitor branch
-
 trigger:
   branches:
     include:
       - monitor
 
+schedules:
+  - cron: "0 7 * * *"
+    displayName: Daily Monitor
+    branches:
+      include:
+        - monitor
+    always: true
+
 pool:
   vmImage: ubuntu-latest
-
-variables:
-  - name: monitorImageName
-    value: 'aa-monitorlambda'
-  - name: repositoryName
-    value: ${{ format('{0}-ecr', parameters.environment) }}
 
 parameters:
   - name: environment
@@ -24,27 +22,29 @@ parameters:
      - uat
      - prod
 
-name: '$(Date:yyyyMMdd)$(Rev:.r) Monitor Lambda - ${{ parameters.environment }} environment'
+variables:
+  - name: monitorImageName
+    value: 'aa-monitorlambda'
+  - name: repositoryName
+    value: ${{ format('{0}-ecr', parameters.environment) }}
 
 steps:
 - task: DockerInstaller@0
   displayName: 'Install Docker'
 
-# Build Monitor Lambda Docker Image
 - task: Docker@2
-  displayName: 'Monitor Lambda - Build Docker Image'
+  displayName: 'Build Monitor Lambda Image'
   inputs:
     command: build
     repository: $(monitorImageName)
-    Dockerfile: '**/modules/lambda/MonitorLambda/Dockerfile'
+    Dockerfile: 'monitor/Dockerfile'
     tags: |
       $(Build.BuildId)
     arguments: |
-      --build-arg S3_BUCKET=aabackstop-${{parameters.environment}}
+      --build-arg S3_BUCKET=aabackstop-${{ parameters.environment }}
 
-# Push Monitor Lambda image to ECR
 - task: ECRPushImage@1
-  displayName: 'Monitor Lambda - Push image to ECR'
+  displayName: 'Push Monitor Lambda to ECR'
   inputs:
     awsCredentials: ${{ format('AWS-ECR-{0}', parameters.environment) }}
     regionName: 'eu-west-1'
@@ -55,32 +55,21 @@ steps:
     pushTag: |
       monitorlambda
 
-# Run Monitor Lambda Validation
 - script: |
-    pip install azure-storage-blob boto3
-    python modules/lambda/MonitorLambda/monitor_lambda.py prod
-  displayName: Run File Validation (Monitor Lambda)
+    echo "🔍 Running daily sync validation..."
+    python3 monitor_sync.py
+  displayName: 'Run Daily Monitor Script'
+  workingDirectory: monitor
   env:
-    SECRET_NAME: "azneprod"
-    AWS_REGION: "eu-west-1"
-    AZURE_CONTAINER_UAT: "uat"
-    AZURE_CONTAINER_PROD: "prod"
-    S3_UAT_BUCKET: "aabackstop-uat"
-    S3_PROD_BUCKET: "aabackstop-prod"
-    MODE: "daily"
-    EMAIL_TO: "ROAD_Ops_L2_Support@theaa.com"
+    AZURE_CONN_STR: $(AZURE_CONN_STR)
+    AZURE_CONTAINER: $(AZURE_CONTAINER)
+    S3_BUCKET: aabackstop-${{ parameters.environment }}
+    MODE: daily
 
-# # (Optional) Send email using AWS SES if pipeline fails
-# - task: PowerShell@2
-#   displayName: 'Send Email on Failure'
-#   condition: failed()
-#   inputs:
-#     targetType: 'inline'
-#     script: |
-#       Write-Host "Pipeline failed. Sending email alert..."
-#       aws ses send-email `
-#         --region eu-west-1 `
-#         --from "noreply@theaa.com" `
-#         --destination "ToAddresses=ROAD_Ops_L2_Support@theaa.com" `
-#         --message "Subject={Data=Daily Monitor Lambda Failed},Body={Text={Data=One or more files missing or size mismatched in ${{ parameters.environment }}. Please check the logs.}}"
-
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Sync Log Artifact'
+  condition: succeededOrFailed()
+  inputs:
+    PathtoPublish: 'monitor/sync_log.txt'
+    ArtifactName: 'SyncLog'
+    publishLocation: 'Container'
