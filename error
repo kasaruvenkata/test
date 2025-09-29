@@ -8,6 +8,15 @@ connection_string
 
 
 see if we can fix this these values from working script lambda_function.py
+AWS Secrets Manager -> Secrets -> azneprod
+
+secretvalue:
+connection_string 
+
+in azure my stirage account details :
+Storage account name: azneprodstaabackstop
+
+Run Daily Monitor Script in Docker
 
 
 Starting: Run Daily Monitor Script in Docker
@@ -20,8 +29,7 @@ Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/c
 ==============================================================================
 Generating script.
 ========================== Starting Command Output ===========================
-/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/641974b4-df44-43a8-ad2c-de6a7918a03e.sh
+/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/86dda27d-3c5e-437c-8da8-a38e1dc06461.sh
 🔍 Running daily sync validation inside Docker...
-/home/vsts/work/_temp/641974b4-df44-43a8-ad2c-de6a7918a03e.sh: line 2: AZURE_CONN_STR: command not found
-/home/vsts/work/_temp/641974b4-df44-43a8-ad2c-de6a7918a03e.sh: line 2: AZURE_CONTAINER: command not found
-29 Sep 2025 07:25:07,274 [INFO] (rapid) exec '/var/runtime/bootstrap' (cwd=/var/task, handler=)
+/home/vsts/work/_temp/86dda27d-3c5e-437c-8da8-a38e1dc06461.sh: line 2: ***_ACCESS_KEY_ID: command not found
+/home/vsts/work/_temp/86dda27d-3c5e-437c-8da8-a38e1dc06461.sh: line 2: ***_SECRET_ACCESS_KEY: command not found
