@@ -1,27 +1,17 @@
 import boto3
 import os
-import sys
-from datetime import datetime, timedelta
 from azure.storage.blob import BlobServiceClient
 from botocore.exceptions import ClientError
 
-# Environment variables from Azure DevOps pipeline
-SECRET_NAME = os.getenv("SECRET_NAME")
-REGION = os.getenv("AWS_REGION")
-AZURE_CONTAINERS = {
-    "uat": os.getenv("AZURE_CONTAINER_UAT"),
-    "prod": os.getenv("AZURE_CONTAINER_PROD"),
-}
-S3_BUCKETS = {
-    "uat": os.getenv("S3_UAT_BUCKET"),
-    "prod": os.getenv("S3_PROD_BUCKET"),
-}
-MODE = os.getenv("MODE", "daily")  # daily | weekly
-EMAIL_TO = os.getenv("EMAIL_TO", "ROAD_Ops_L2_Support@theaa.com")
+# ENV
+SECRET_NAME = "azneprod"   # from AWS Secrets Manager
+AZURE_CONTAINER = os.getenv("AZURE_CONTAINER", "uat")
+S3_BUCKET = os.getenv("S3_BUCKET")
+ALERT_EMAIL = "ROAD_Ops_L2_Support@theaa.com"
 
-# AWS clients
-secrets_client = boto3.client("secretsmanager", region_name=REGION)
-s3_client = boto3.client("s3", region_name=REGION)
+secrets_client = boto3.client("secretsmanager")
+s3_client = boto3.client("s3")
+ses_client = boto3.client("ses", region_name="eu-west-1")
 
 def get_secret():
     try:
@@ -29,70 +19,52 @@ def get_secret():
         return eval(response["SecretString"])
     except ClientError as e:
         print(f"❌ Error retrieving secret: {e}")
-        sys.exit(1)
+        raise
 
-def validate_daily(blob_service_client):
-    today = datetime.utcnow().strftime("%Y%m%d")
-    zip_today = datetime.utcnow().strftime("%Y-%m-%d")
-    # Expected patterns for today
-    expected_files = [
-        f"indoor_users_{today}_",        # txt file prefix
-        f"Oracle/AABS-{zip_today}.zip",  # zip file exact name
-    ]
+def send_email(subject, body):
+    try:
+        response = ses_client.send_email(
+            Source="noreply@theaa.com",  # must be verified in SES
+            Destination={"ToAddresses": [ALERT_EMAIL]},
+            Message={
+                "Subject": {"Data": subject},
+                "Body": {"Text": {"Data": body}}
+            }
+        )
+        print(f"📧 Alert email sent: {response['MessageId']}")
+    except Exception as e:
+        print(f"❌ Error sending email: {e}")
 
-    missing_files = []
-    size_mismatch_files = []
-
-    for env, container_name in AZURE_CONTAINERS.items():
-        s3_bucket = S3_BUCKETS[env]
-        container_client = blob_service_client.get_container_client(container_name)
-
-        # List all Azure blobs
-        azure_blobs = {b.name: b.size for b in container_client.list_blobs()}
-        # List all S3 objects
-        s3_objs_resp = s3_client.list_objects_v2(Bucket=s3_bucket)
-        s3_objects = {obj["Key"]: obj["Size"] for obj in s3_objs_resp.get("Contents", [])}
-
-        for pattern in expected_files:
-            # Find blob in Azure
-            azure_match = [name for name in azure_blobs if name.startswith(pattern)]
-            if not azure_match:
-                missing_files.append(f"Azure {env} missing {pattern}")
-                continue  # Skip S3 size check if missing in Azure
-
-            # Check S3
-            s3_match = [key for key in s3_objects if key.startswith(pattern)]
-            if not s3_match:
-                missing_files.append(f"S3 {env} missing {pattern}")
-                continue
-
-            # Compare sizes
-            azure_size = azure_blobs[azure_match[0]]
-            s3_size = s3_objects[s3_match[0]]
-            if azure_size != s3_size:
-                size_mismatch_files.append(
-                    f"{env}: File {pattern} size mismatch - Azure({azure_size}) != S3({s3_size})"
-                )
-
-    # Report results
-    if missing_files or size_mismatch_files:
-        print("❌ File Validation Failed:")
-        for mf in missing_files + size_mismatch_files:
-            print("   -", mf)
-        sys.exit(1)
-    else:
-        print("✅ All files exist and sizes match for today.")
-
-def main():
+def lambda_handler(event, context):
     secret = get_secret()
     connection_string = secret["connection_string"]
-    blob_service_client = BlobServiceClient.from_connection_string(conn_str=connection_string)
 
-    if MODE == "daily":
-        validate_daily(blob_service_client)
+    blob_service_client = BlobServiceClient.from_connection_string(conn_str=connection_string)
+    container_client = blob_service_client.get_container_client(AZURE_CONTAINER)
+
+    print(f"🔎 Validating blobs in container '{AZURE_CONTAINER}' against S3 bucket '{S3_BUCKET}'")
+
+    mismatches = []
+    for blob in container_client.list_blobs():
+        blob_name = blob.name
+        blob_size = blob.size
+        print(f"Found blob: {blob_name} ({blob_size} bytes)")
+
+        try:
+            s3_object = s3_client.head_object(Bucket=S3_BUCKET, Key=blob_name)
+            s3_size = s3_object["ContentLength"]
+
+            if s3_size != blob_size:
+                mismatches.append(f"❌ Size mismatch: {blob_name} | Blob={blob_size} | S3={s3_size}")
+        except ClientError:
+            mismatches.append(f"❌ Missing in S3: {blob_name}")
+
+    if mismatches:
+        subject = f"[ALERT] File Validation Failed in {S3_BUCKET}"
+        body = "\n".join(mismatches)
+        send_email(subject, body)
     else:
-        print("❌ Weekly mode not implemented yet. Only daily validation.")
-        sys.exit(1)
+        print("✅ All files validated successfully. Sizes match.")
 
 if __name__ == "__main__":
-    main()
+    lambda_handler({}, {})
