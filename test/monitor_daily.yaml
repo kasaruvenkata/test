@@ -57,9 +57,9 @@ steps:
 
 # Run Monitor Lambda Validation
 - script: |
-    echo "Running Monitor Lambda Validation for environment ${{ parameters.environment }}"
-    python modules/lambda/MonitorLambda/monitor_lambda.py
-  displayName: 'Run File Validation (Monitor Lambda)'
+    pip install azure-storage-blob boto3
+    python modules/lambda/MonitorLambda/monitor_lambda.py prod
+  displayName: Run File Validation (Monitor Lambda)
   env:
     SECRET_NAME: "azneprod"
     AWS_REGION: "eu-west-1"
@@ -83,3 +83,4 @@ steps:
 #         --from "noreply@theaa.com" `
 #         --destination "ToAddresses=ROAD_Ops_L2_Support@theaa.com" `
 #         --message "Subject={Data=Daily Monitor Lambda Failed},Body={Text={Data=One or more files missing or size mismatched in ${{ parameters.environment }}. Please check the logs.}}"
+
