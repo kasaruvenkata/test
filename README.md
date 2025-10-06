@@ -1,5 +1,6 @@
 azne-subn-roanon-t-chicane-dev-2 - subnet
 
+azne-aks-dev-t-aahelp-1
 
 azne-vnet-roanon-t-1 - Virtual networks
 
