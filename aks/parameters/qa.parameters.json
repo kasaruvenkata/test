@@ -3,6 +3,15 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "environment": { "value": "qa" },
-    "location": { "value": "northeurope" }
+    "location": { "value": "northeurope" },
+    "aksName": { "value": "azne-aks-qa-t-aahelp-1" },
+    "vnetName": { "value": "azne-vnet-roanon-t-1" },
+    "subnetName": { "value": "azne-subn-roanon-t-aks-aahelp-2" },
+    "vnetResourceGroup": { "value": "azne-rg-roanon-defaultnetworking-1" },
+    "subscriptionId": { "value": "d4655204-e89c-45ee-bd64-2705675e8513" },
+    "nodeMinCount": { "value": 2 },
+    "nodeMaxCount": { "value": 5 },
+    "nodeVmSize": { "value": "Standard_D4ds_v5" },
+    "kubernetesVersion": { "value": "1.32.7" }
   }
 }
