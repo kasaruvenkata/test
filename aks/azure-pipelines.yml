@@ -5,10 +5,11 @@ trigger:
       - prod
 
 variables:
-  azureSubscription: 'Your-Service-Connection-Name'
+  azureSubscription: 'Your-Service-Connection'
   resourceGroupName: 'azne-rg-roanon-t-aahelp'
-  templateFile: 'qa-infra/main.bicep'
-  parametersFile: 'qa-infra/parameters/qa.parameters.json'
+  templateFile: 'infra/main.bicep'
+  parametersFile: 'infra/parameters/qa.parameters.json'
+  keyVaultName: 'aahelp-keyvault'     # Replace with your Key Vault name
 
 stages:
 - stage: Deploy
@@ -17,7 +18,29 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
+    # Step 1: Download cert from DevOps Secure Files
+    - task: DownloadSecureFile@1
+      name: downloadCert
+      displayName: 'Download wildcard.cert'
+      inputs:
+        secureFile: 'wildcard.cert'
+
+    # Step 2: Upload certificate to Azure Key Vault
     - task: AzureCLI@2
+      displayName: 'Upload cert to Key Vault'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az keyvault certificate import \
+            --vault-name $(keyVaultName) \
+            --name wildcard-aahelp-cert \
+            --file "$(downloadCert.secureFilePath)"
+
+    # Step 3: Deploy Bicep Template
+    - task: AzureCLI@2
+      displayName: 'Deploy AKS via Bicep'
       inputs:
         azureSubscription: $(azureSubscription)
         scriptType: bash
