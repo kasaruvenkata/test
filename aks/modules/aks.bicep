@@ -4,22 +4,19 @@ param aksName string
 @description('Environment name (qa, prod)')
 param environment string
 
-@description('Deployment location')
+@description('Location for deployment')
 param location string
 
-@description('Subnet Resource ID for node pool')
+@description('Subnet Resource ID')
 param subnetId string
 
-@description('Log Analytics workspace resource ID')
-param logWorkspaceId string
-
-@description('Node count minimum')
+@description('Minimum node count')
 param nodeMinCount int
 
-@description('Node count maximum')
+@description('Maximum node count')
 param nodeMaxCount int
 
-@description('Node VM size')
+@description('VM size for nodes')
 param nodeVmSize string
 
 @description('Kubernetes version')
@@ -73,35 +70,16 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2025-05-01' = {
       azurepolicy: {
         enabled: true
       }
-      azureKeyvaultSecretsProvider: {
-        enabled: true
-        config: {
-          enableSecretRotation: 'true'
-        }
-      }
     }
     nodeResourceGroup: 'MC_azne-rg-roanon-t-aahelp_${aksName}_${location}'
     enableRBAC: true
-    securityProfile: {
-      defender: {
-        logAnalyticsWorkspaceResourceId: logWorkspaceId
-        securityMonitoring: {
-          enabled: true
-        }
-      }
-      imageCleaner: {
-        enabled: true
-        intervalHours: 168
-      }
-      workloadIdentity: {
-        enabled: true
-      }
-    }
     storageProfile: {
       diskCSIDriver: { enabled: true }
       fileCSIDriver: { enabled: true }
       snapshotController: { enabled: true }
     }
-    oidcIssuerProfile: { enabled: true }
+    oidcIssuerProfile: {
+      enabled: true
+    }
   }
 }
