@@ -5,48 +5,91 @@ trigger:
       - prod
 
 variables:
-  azureSubscription: 'Your-Service-Connection'
+  azureSubscription: 'Your-Service-Connection-Name'   # <-- Replace with your Azure DevOps Service Connection
   resourceGroupName: 'azne-rg-roanon-t-aahelp'
+  aksClusterName: 'azne-aks-qa-t-aahelp-1'
+  aksNamespace: 'default'
   templateFile: 'infra/main.bicep'
   parametersFile: 'infra/parameters/qa.parameters.json'
-  keyVaultName: 'aahelp-keyvault'     # Replace with your Key Vault name
 
 stages:
 - stage: Deploy
+  displayName: "Deploy AKS and TLS Cert"
   jobs:
   - job: DeployAKS
+    displayName: "AKS Deployment with Wildcard Cert"
     pool:
       vmImage: 'ubuntu-latest'
+
     steps:
-    # Step 1: Download cert from DevOps Secure Files
+
+    # Step 1: Checkout Repo
+    - checkout: self
+
+    # Step 2: Download wildcard certificate from Secure Files
     - task: DownloadSecureFile@1
       name: downloadCert
-      displayName: 'Download wildcard.cert'
+      displayName: "Download wildcard.cert from Secure Files"
       inputs:
         secureFile: 'wildcard.cert'
 
-    # Step 2: Upload certificate to Azure Key Vault
+    # Step 3: Deploy AKS cluster using your Bicep template
     - task: AzureCLI@2
-      displayName: 'Upload cert to Key Vault'
+      displayName: "Deploy AKS via Bicep"
       inputs:
         azureSubscription: $(azureSubscription)
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
-          az keyvault certificate import \
-            --vault-name $(keyVaultName) \
-            --name wildcard-aahelp-cert \
-            --file "$(downloadCert.secureFilePath)"
-
-    # Step 3: Deploy Bicep Template
-    - task: AzureCLI@2
-      displayName: 'Deploy AKS via Bicep'
-      inputs:
-        azureSubscription: $(azureSubscription)
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
+          echo "Deploying AKS cluster using Bicep..."
           az deployment group create \
             --resource-group $(resourceGroupName) \
             --template-file $(templateFile) \
             --parameters @$(parametersFile)
+
+    # Step 4: Get AKS Credentials
+    - task: AzureCLI@2
+      displayName: "Get AKS Credentials"
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Fetching AKS credentials..."
+          az aks get-credentials \
+            --resource-group $(resourceGroupName) \
+            --name $(aksClusterName) \
+            --overwrite-existing
+
+    # Step 5: Create Kubernetes TLS Secret using wildcard.cert
+    - task: AzureCLI@2
+      displayName: "Create Kubernetes TLS Secret (wildcard.cert)"
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Creating Kubernetes TLS secret..."
+          
+          # Make sure cert file exists
+          ls -l "$(downloadCert.secureFilePath)"
+
+          # You must also have the wildcard.key file uploaded to Secure Files if your cert requires a key
+          # If you already embedded key + cert into one .pem/.crt file, only this is needed
+
+          kubectl create secret generic wildcard-tls \
+            --from-file=tls.crt="$(downloadCert.secureFilePath)" \
+            -n $(aksNamespace) --dry-run=client -o yaml | kubectl apply -f -
+
+          echo "✅ TLS secret 'wildcard-tls' successfully created in namespace $(aksNamespace)"
+
+    # Step 6: (Optional) Verify secret exists
+    - task: AzureCLI@2
+      displayName: "Verify Kubernetes TLS Secret"
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Verifying secret..."
+          kubectl get secret wildcard-tls -n $(aksNamespace)
