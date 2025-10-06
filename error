@@ -1,4 +1,7 @@
-azuredevops library group variables
+The pipeline is not valid. Job DeployAKS: Step AzureCLI1 input connectedServiceNameARM references service connection aacom.roadops-aahelp-iaac which could not be found. The service connection does not exist, has been disabled or has not been authorized for use. For authorization details, refer to https://aka.ms/yamlauthz. Job DeployAKS: Step AzureCLI2 input connectedServiceNameARM references service connection aacom.roadops-aahelp-iaac which could not be found. 
+The service connection does not exist, has been disabled or has not been authorized for use. For authorization details,
+
+
 uat-aws-credentials
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
