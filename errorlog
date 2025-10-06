@@ -1,63 +1,77 @@
-2025-10-06T21:12:55.4579932Z ##[section]Starting: Deploy AKS cluster using Bicep
-2025-10-06T21:12:55.4595431Z ==============================================================================
-2025-10-06T21:12:55.4596923Z Task         : Azure CLI
-2025-10-06T21:12:55.4597402Z Description  : Run Azure CLI commands against an Azure subscription in a PowerShell Core/Shell script when running on Linux agent or PowerShell/PowerShell Core/Batch script when running on Windows agent.
-2025-10-06T21:12:55.4597964Z Version      : 2.262.1
-2025-10-06T21:12:55.4598333Z Author       : Microsoft Corporation
-2025-10-06T21:12:55.4598722Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/deploy/azure-cli
-2025-10-06T21:12:55.4599124Z ==============================================================================
-2025-10-06T21:12:55.7735201Z [command]/usr/bin/az --version
-2025-10-06T21:12:57.4847715Z azure-cli                         2.77.0
-2025-10-06T21:12:57.4849865Z 
-2025-10-06T21:12:57.4850647Z core                              2.77.0
-2025-10-06T21:12:57.4851221Z telemetry                          1.1.0
-2025-10-06T21:12:57.4851736Z 
-2025-10-06T21:12:57.4857372Z Extensions:
-2025-10-06T21:12:57.4858548Z azure-devops                       1.0.2
-2025-10-06T21:12:57.4859175Z 
-2025-10-06T21:12:57.4859775Z Dependencies:
-2025-10-06T21:12:57.4860296Z msal                            1.34.0b1
-2025-10-06T21:12:57.4860810Z azure-mgmt-resource               23.3.0
-2025-10-06T21:12:57.4861151Z 
-2025-10-06T21:12:57.4861775Z Python location '/opt/az/bin/python3'
-2025-10-06T21:12:57.4862349Z Config directory '/home/vsts/.azure'
-2025-10-06T21:12:57.4862900Z Extensions directory '/opt/az/azcliextensions'
-2025-10-06T21:12:57.4884078Z 
-2025-10-06T21:12:57.4884689Z Python (Linux) 3.13.7 (main, Aug 26 2025, 08:47:19) [GCC 13.3.0]
-2025-10-06T21:12:57.4884936Z 
-2025-10-06T21:12:57.4885294Z Legal docs and information: aka.ms/AzureCliLegal
-2025-10-06T21:12:57.4885525Z 
-2025-10-06T21:12:57.4885684Z 
-2025-10-06T21:12:57.4896740Z Your CLI is up-to-date.
-2025-10-06T21:12:57.4897729Z Setting AZURE_CONFIG_DIR env variable to: /home/vsts/work/_temp/.azclitask
-2025-10-06T21:12:57.4910445Z Setting active cloud to: AzureCloud
-2025-10-06T21:12:57.4920674Z [command]/usr/bin/az cloud set -n AzureCloud
-2025-10-06T21:13:04.5378691Z [command]/usr/bin/az login --service-principal -u *** --tenant 52da6ceb-c432-45d8-9cee-97902996ced9 --allow-no-subscriptions --federated-token ***
-2025-10-06T21:13:05.2787357Z [
-2025-10-06T21:13:05.2811748Z   {
-2025-10-06T21:13:05.2812421Z     "cloudName": "AzureCloud",
-2025-10-06T21:13:05.2813287Z     "homeTenantId": "52da6ceb-c432-45d8-9cee-97902996ced9",
-2025-10-06T21:13:05.2814344Z     "id": "d4655204-e89c-45ee-bd64-2705675e8513",
-2025-10-06T21:13:05.2837791Z     "isDefault": true,
-2025-10-06T21:13:05.2838271Z     "managedByTenants": [
-2025-10-06T21:13:05.2838604Z       {
-2025-10-06T21:13:05.2838942Z         "tenantId": "c3d431f1-3e02-4c62-a825-79cd8f9e2053"
-2025-10-06T21:13:05.2839289Z       }
-2025-10-06T21:13:05.2839880Z     ],
-2025-10-06T21:13:05.2840190Z     "name": "theAA-Road-NonProduction",
-2025-10-06T21:13:05.2840507Z     "state": "Enabled",
-2025-10-06T21:13:05.2840829Z     "tenantId": "52da6ceb-c432-45d8-9cee-97902996ced9",
-2025-10-06T21:13:05.2841146Z     "user": {
-2025-10-06T21:13:05.2841590Z       "name": "***",
-2025-10-06T21:13:05.2841897Z       "type": "servicePrincipal"
-2025-10-06T21:13:05.2842193Z     }
-2025-10-06T21:13:05.2842437Z   }
-2025-10-06T21:13:05.2842676Z ]
-2025-10-06T21:13:05.2843021Z [command]/usr/bin/az account set --subscription d4655204-e89c-45ee-bd64-2705675e8513
-2025-10-06T21:13:05.7917542Z [command]/usr/bin/bash /home/vsts/work/_temp/azureclitaskscript1759785175767.sh
-2025-10-06T21:13:05.8001442Z Deploying AKS cluster: azne-aks-qa-t-aahelp-1
-2025-10-06T21:13:48.6068937Z ERROR: {"status":"Failed","error":{"code":"DeploymentFailed","target":"/subscriptions/d4655204-e89c-45ee-bd64-2705675e8513/resourceGroups/azne-rg-roanon-t-aahelp/providers/Microsoft.Resources/deployments/main","message":"At least one resource deployment operation failed. Please list deployment operations for details. Please see https://aka.ms/arm-deployment-operations for usage details.","details":[{"code":"InvalidTemplateDeployment","message":"The template deployment 'azne-aks-qa-t-aahelp-1-deployment' is not valid according to the validation procedure. The tracking id is '4e39dad2-2a4c-4eb1-9d9d-213905bb90bc'. See inner errors for details.","details":[{"code":"OperationNotAllowed","message":"Preflight validation check for resource(s) for container service azne-aks-qa-t-aahelp-1 in resource group azne-rg-roanon-t-aahelp failed. Message: Operation is not allowed because there's an in progress update managed cluster operation (operation ID: 8c6b587f-5ece-4d8e-ae99-9f9736e3babe) on the managed cluster started on UTC 2025-10-06T21:13:16Z. Please wait for it to finish before starting a new operation. You can also use 'az aks operation-abort ...' to abort the ongoing operation.. Details: "}]}]}}
-2025-10-06T21:13:48.7623348Z 
-2025-10-06T21:13:48.7688082Z ##[error]Script failed with exit code: 1
-2025-10-06T21:13:48.7703043Z [command]/usr/bin/az account clear
-2025-10-06T21:13:49.4208106Z ##[section]Finishing: Deploy AKS cluster using Bicep
+trigger:
+  branches:
+    include:
+      - dev
+
+variables:
+  azureSubscription: 'akscluster_roadops'
+  resourceGroupName: 'azne-rg-roanon-t-aahelp'
+  aksClusterName: 'azne-aks-dev-t-aahelp-1'
+  aksNamespace: 'default'
+
+stages:
+- stage: IntegrateCert
+  displayName: "Integrate Wildcard Cert into Dev AKS"
+  jobs:
+  - job: CreateTLSSecret
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    - checkout: self
+
+    # Step 1: Download cert from Secure Files
+    - task: DownloadSecureFile@1
+      name: downloadCert
+      displayName: "Download wildcard.cert from Secure Files"
+      inputs:
+        secureFile: 'wildcard.cert'
+
+    # Step 2: Get Dev AKS credentials
+    - task: AzureCLI@2
+      displayName: "Connect to Dev AKS Cluster"
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Connecting to AKS cluster: $AKSCLUSTERNAME..."
+          az aks get-credentials \
+            --resource-group "$RESOURCEGROUPNAME" \
+            --name "$AKSCLUSTERNAME" \
+            --overwrite-existing
+      env:
+        RESOURCEGROUPNAME: $(resourceGroupName)
+        AKSCLUSTERNAME: $(aksClusterName)
+
+    # Step 3: Create TLS Secret in Dev AKS
+    - task: AzureCLI@2
+      displayName: "Create wildcard-tls Secret in Dev"
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Creating TLS secret for Dev..."
+          ls -l "$(downloadCert.secureFilePath)"
+
+          kubectl create secret generic wildcard-tls \
+            --from-file=tls.crt="$(downloadCert.secureFilePath)" \
+            -n "$AKSNAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+
+          echo "✅ TLS secret 'wildcard-tls' created successfully in namespace '$AKSNAMESPACE'"
+      env:
+        AKSNAMESPACE: $(aksNamespace)
+
+    # Step 4: Verify Secret
+    - task: AzureCLI@2
+      displayName: "Verify wildcard-tls Secret in Dev"
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Verifying wildcard-tls secret in Dev cluster..."
+          kubectl get secret wildcard-tls -n "$AKSNAMESPACE" -o yaml
+      env:
+        AKSNAMESPACE: $(aksNamespace)
