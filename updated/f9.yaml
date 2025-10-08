@@ -1,0 +1,58 @@
+Infra/monitor_weekly.yaml
+
+trigger: none
+
+schedules:
+  - cron: "0 06 * * SUN"
+    displayName: Weekly Summary Monitor
+    branches:
+      include:
+        - uat
+        - prod
+    always: true
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: environment
+    type: string
+    default: 'uat'
+    values:
+      - uat
+      - prod
+
+variables:
+  - name: awsRegion
+    value: 'eu-west-1'
+
+steps:
+- script: |
+    set -euo pipefail
+    echo "Invoking weekly monitor for ${{ parameters.environment }}"
+    aws lambda invoke --function-name monitorlambda-${{ parameters.environment }} \
+      --payload '{"mode":"weekly","days":7}' --region $(awsRegion) output.json
+    cat output.json
+    python3 - <<'PY'
+import json,datetime
+o=json.load(open('output.json'))
+dis=o.get('discrepancies', [])
+if dis:
+    fname=f"missing-files-weekly-${{ parameters.environment }}-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.txt"
+    with open(fname,'w') as fh:
+        fh.write(json.dumps(dis,indent=2))
+    print("ARTIFACT_FILE="+fname)
+    print(open(fname).read())
+else:
+    print("No discrepancies found in weekly run.")
+PY
+  displayName: 'Invoke Weekly Monitor & produce artifact'
+  env:
+    AWS_REGION: $(awsRegion)
+
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish missing-files weekly artifact (if present)'
+  inputs:
+    targetPath: '$(Pipeline.Workspace)'
+    artifact: 'monitor-weekly-output'
+    publishLocation: 'pipeline'

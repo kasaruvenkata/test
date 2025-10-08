@@ -1,0 +1,101 @@
+Infra/monitor_daily.yaml
+
+trigger: none
+
+schedules:
+  - cron: "0 03 * * *"
+    displayName: Daily Monitor
+    branches:
+      include:
+        - uat
+        - prod
+    always: true
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: environment
+    type: string
+    default: 'uat'
+    values:
+      - uat
+      - prod
+
+variables:
+  - name: monitorImageName
+    value: 'aa-monitorlambda'
+  - name: repositoryName
+    value: ${{ format('{0}-ecr', parameters.environment) }}
+  - name: imageTag
+    value: 'monitorlambda'
+  - name: awsRegion
+    value: 'eu-west-1'
+
+steps:
+- task: Docker@2
+  displayName: Build Monitor Lambda image
+  inputs:
+    command: build
+    repository: $(monitorImageName)
+    Dockerfile: modules/lambda/MonitorLambda/Dockerfile
+    tags: |
+      $(Build.BuildId)
+    arguments: |
+      --build-arg S3_BUCKET=aabackstop-${{ parameters.environment }}
+
+- task: ECRPushImage@1
+  displayName: Push Monitor image to ECR
+  inputs:
+    awsCredentials: ${{ format('AWS-ECR-{0}', parameters.environment) }}
+    regionName: $(awsRegion)
+    imageSource: 'imagename'
+    sourceImageName: $(monitorImageName)
+    sourceImageTag: $(Build.BuildId)
+    repositoryName: $(repositoryName)
+    pushTag: |
+      $(imageTag)
+
+- script: |
+    set -euo pipefail
+    echo "Get ECR repo url"
+    ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --region $(awsRegion))
+    REPO="${{ format('{0}', variables['repositoryName']) }"
+    # compute repo url using account + region and repo name
+    ECR_URI="${ACCOUNT_ID}.dkr.ecr.$(awsRegion).amazonaws.com/${{ format('{0}', variables['repositoryName']) }}:$(imageTag)"
+
+    echo "Updating Lambda function to use image: $ECR_URI"
+    aws lambda update-function-code --function-name monitorlambda-${{ parameters.environment }} --image-uri "$ECR_URI" --region $(awsRegion)
+
+    echo "Invoking monitor lambda (daily)"
+    aws lambda invoke --function-name monitorlambda-${{ parameters.environment }} \
+      --payload '{"mode":"daily"}' --region $(awsRegion) output.json
+
+    echo "Pipeline captured monitor output:"
+    cat output.json
+
+    # parse output.json for discrepancies -> create artifact if non-empty
+    python3 - <<'PY'
+import json, datetime
+o=json.load(open('output.json'))
+dis=o.get('discrepancies', [])
+if dis:
+    fname=f"missing-files-${{ parameters.environment }}-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.txt"
+    with open(fname,'w') as fh:
+        fh.write(json.dumps(dis, indent=2))
+    print("ARTIFACT_FILE="+fname)
+    # print file to logs
+    print(open(fname).read())
+else:
+    print("No discrepancies found.")
+PY
+  displayName: 'Update Lambda, Invoke, Produce Artifact if needed'
+  env:
+    AWS_REGION: $(awsRegion)
+
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish missing-files artifact (if present)'
+  inputs:
+    targetPath: '$(Pipeline.Workspace)'
+    artifact: 'monitor-output'
+    publishLocation: 'pipeline'
