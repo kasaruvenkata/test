@@ -1,0 +1,70 @@
+# Infra/monitor_daily.yaml
+
+# monitor_daily.yaml
+# Runs daily for both uat and prod; builds image and invokes monitor lambda
+
+trigger: none
+
+schedules:
+  - cron: "0 3 * * *"   # daily at 03:00 UTC (adjust to your preferred time)
+    displayName: Daily Monitor
+    branches:
+      include:
+        - uat
+        - prod
+    always: true
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: environment
+    type: string
+    default: 'uat'
+    values:
+      - uat
+      - prod
+
+variables:
+  - name: monitorImageName
+    value: 'aa-monitorlambda'
+  - name: repositoryName
+    value: ${{ format('{0}-ecr', parameters.environment) }}
+  - name: imageTag
+    value: 'monitorlambda'
+
+steps:
+- task: Docker@2
+  displayName: Build Monitor Lambda image
+  inputs:
+    containerRegistry: '' # optional if using service connection; ECRPushImage will handle push
+    repository: $(monitorImageName)
+    command: build
+    Dockerfile: modules/lambda/MonitorLambda/Dockerfile
+    tags: |
+      $(Build.BuildId)
+    arguments: |
+      --build-arg S3_BUCKET=aabackstop-${{ parameters.environment }}
+
+- task: ECRPushImage@1
+  displayName: Push Monitor image to ECR
+  inputs:
+    awsCredentials: ${{ format('AWS-ECR-{0}', parameters.environment) }}
+    regionName: 'eu-west-1'
+    imageSource: 'imagename'
+    sourceImageName: $(monitorImageName)
+    sourceImageTag: $(Build.BuildId)
+    repositoryName: $(repositoryName)
+    pushTag: |
+      $(imageTag)
+
+- script: |
+    echo "Invoke monitor lambda in env: ${{ parameters.environment }}"
+    aws lambda invoke \
+      --function-name monitorlambda-${{ parameters.environment }} \
+      --payload '{"mode": "daily"}' \
+      --region eu-west-1 output.json
+    cat output.json
+  displayName: Invoke Monitor Lambda
+  env:
+    AWS_REGION: 'eu-west-1'

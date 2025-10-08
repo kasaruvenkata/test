@@ -1,0 +1,7 @@
+# Infra/modules/lambda/MonitorLambda/requirements.txt
+
+azure-identity
+azure-storage-blob
+boto3
+cryptography<42
+cffi<2.0
