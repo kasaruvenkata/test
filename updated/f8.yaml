@@ -1,5 +1,3 @@
-Infra/monitor_daily.yaml
-
 trigger: none
 
 schedules:
@@ -58,11 +56,15 @@ steps:
 
 - script: |
     set -euo pipefail
-    echo "Get ECR repo url"
-    ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --region $(awsRegion))
-    REPO="${{ format('{0}', variables['repositoryName']) }"
-    # compute repo url using account + region and repo name
-    ECR_URI="${ACCOUNT_ID}.dkr.ecr.$(awsRegion).amazonaws.com/${{ format('{0}', variables['repositoryName']) }}:$(imageTag)"
+
+    # compile-time parameter expansion into runtime env var
+    ENVIRONMENT="${{ parameters.environment }}"
+
+    echo "Account ID and ECR details (region: $(awsRegion))"
+    ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --region $(awsRegion) )
+
+    # repo name and tag come from pipeline variables
+    ECR_URI="${ACCOUNT_ID}.dkr.ecr.$(awsRegion).amazonaws.com/$(repositoryName):$(imageTag)"
 
     echo "Updating Lambda function to use image: $ECR_URI"
     aws lambda update-function-code --function-name monitorlambda-${{ parameters.environment }} --image-uri "$ECR_URI" --region $(awsRegion)
@@ -72,19 +74,25 @@ steps:
       --payload '{"mode":"daily"}' --region $(awsRegion) output.json
 
     echo "Pipeline captured monitor output:"
-    cat output.json
+    cat output.json || true
 
-    # parse output.json for discrepancies -> create artifact if non-empty
+    # create an artifact file if discrepancies exist
+    export ENVIRONMENT
     python3 - <<'PY'
-import json, datetime
-o=json.load(open('output.json'))
-dis=o.get('discrepancies', [])
+import os, json, datetime, sys
+env = os.getenv('ENVIRONMENT', 'unknown')
+try:
+    o = json.load(open('output.json'))
+except Exception:
+    print("No valid JSON output produced by lambda (output.json missing or invalid)")
+    sys.exit(0)
+
+dis = o.get('discrepancies', [])
 if dis:
-    fname=f"missing-files-${{ parameters.environment }}-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.txt"
-    with open(fname,'w') as fh:
+    fname = f"missing-files-{env}-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.txt"
+    with open(fname, 'w') as fh:
         fh.write(json.dumps(dis, indent=2))
     print("ARTIFACT_FILE="+fname)
-    # print file to logs
     print(open(fname).read())
 else:
     print("No discrepancies found.")
