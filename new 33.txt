@@ -1,0 +1,158 @@
+/mnt/data/Infra/modules/lambda/MonitorLambda/monitor_lambda.py
+
+import boto3
+import os
+import json
+import sys
+from datetime import datetime
+from botocore.exceptions import ClientError
+from azure.storage.blob import ContainerClient
+
+# Reuse same env var style as existing SyncLambda
+# Allow overriding via env variables passed from pipeline
+SECRET_NAME = os.getenv("SECRET_NAME", "azneprod")
+AWS_REGION = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
+AZURE_CONTAINER = os.getenv("AZURE_CONTAINER", "uat")   # 'uat' or 'prod'
+S3_BUCKET = os.getenv("S3_BUCKET")                      # expected to be provided by pipeline
+REPORT_S3_BUCKET = os.getenv("REPORT_S3_BUCKET", S3_BUCKET)
+REPORT_PREFIX = os.getenv("REPORT_PREFIX", "monitor-reports")
+ENV = os.getenv("ENV", "uat")
+# Optional: if you want to restrict checks to a particular date string
+EXPECTED_DATE = os.getenv("EXPECTED_DATE", "")
+
+secrets_client = boto3.client("secretsmanager", region_name=AWS_REGION)
+s3_client = boto3.client("s3", region_name=AWS_REGION)
+
+def get_secret(secret_name):
+    try:
+        resp = secrets_client.get_secret_value(SecretId=secret_name)
+        if 'SecretString' in resp and resp['SecretString']:
+            try:
+                return json.loads(resp['SecretString'])
+            except Exception:
+                # not a JSON secret, return raw string
+                return resp['SecretString']
+        else:
+            # binary secret - not expected
+            return None
+    except ClientError as e:
+        print("Error fetching secret:", e)
+        raise
+
+def resolve_azure_conn_str(secret_struct):
+    """
+    Secret may be stored in several shapes:
+    - JSON with key 'AZURE_CONN_STR' or 'connection_string' or 'connectionString'
+    - plain string (the connection string itself)
+    This function attempts to be robust.
+    """
+    if not secret_struct:
+        return None
+    if isinstance(secret_struct, dict):
+        for k in ("AZURE_CONN_STR", "azure_conn_str", "connection_string", "connectionString", "conn_str"):
+            if k in secret_struct:
+                return secret_struct[k]
+        # fallback: if only one key present, return its value
+        if len(secret_struct) == 1:
+            return list(secret_struct.values())[0]
+        # otherwise, unable to locate
+        return None
+    if isinstance(secret_struct, str):
+        return secret_struct
+    return None
+
+def list_azure_blobs(conn_str, container_name):
+    container = ContainerClient.from_connection_string(conn_str, container_name=container_name)
+    blobs = []
+    for b in container.list_blobs(name_starts_with=""):
+        blobs.append({"name": b.name, "size": b.size or 0, "last_modified": b.last_modified.isoformat() if b.last_modified else None})
+    return blobs
+
+def s3_head_key(bucket, key):
+    try:
+        resp = s3_client.head_object(Bucket=bucket, Key=key)
+        return {"Found": True, "Size": resp.get("ContentLength", 0), "LastModified": resp.get("LastModified").isoformat() if resp.get("LastModified") else None}
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code", "")
+        if code in ("404", "NoSuchKey", "NotFound"):
+            return {"Found": False}
+        # permission / other error - raise for visibility
+        raise
+
+def filter_by_expected_date(blobs, expected_date):
+    if not expected_date:
+        return blobs
+    normalized = expected_date.replace("-", "")
+    filtered = []
+    for b in blobs:
+        if normalized in b["name"] or expected_date in b["name"]:
+            filtered.append(b)
+    return filtered
+
+def main():
+    if not S3_BUCKET:
+        print("S3_BUCKET must be provided via environment variable.")
+        sys.exit(1)
+
+    # Fetch Azure connection string from Secrets Manager using the same approach as existing lambda
+    secret_struct = get_secret(SECRET_NAME)
+    azure_conn_str = resolve_azure_conn_str(secret_struct)
+    if not azure_conn_str:
+        print("Unable to resolve Azure connection string from secret:", SECRET_NAME)
+        sys.exit(2)
+
+    print(f"Monitoring sync for ENV={ENV}, AZURE_CONTAINER={AZURE_CONTAINER}, S3_BUCKET={S3_BUCKET}")
+
+    blobs = list_azure_blobs(azure_conn_str, AZURE_CONTAINER)
+    if EXPECTED_DATE:
+        blobs = filter_by_expected_date(blobs, EXPECTED_DATE)
+        print(f"Filtered blobs by date {EXPECTED_DATE}: {len(blobs)} items")
+
+    report = {"env": ENV, "s3_bucket": S3_BUCKET, "checked_at": datetime.utcnow().isoformat(), "files_ok": [], "files_missing": [], "files_mismatch": [], "errors": []}
+
+    for b in blobs:
+        name = b["name"]
+        size = int(b["size"] or 0)
+
+        # only check the types you mentioned (.txt root and Oracle/*.zip)
+        if not (name.endswith(".txt") or name.lower().endswith(".zip") or "indoor" in name.lower() or "oracle" in name.lower()):
+            continue
+
+        s3_key = name  # identity mapping; adjust if your sync process renames files
+        try:
+            s3info = s3_head_key(S3_BUCKET, s3_key)
+        except Exception as e:
+            report["errors"].append({"file": name, "error": str(e)})
+            continue
+
+        if not s3info.get("Found"):
+            report["files_missing"].append({"file": name, "expected_s3_key": s3_key, "azure_size": size})
+        else:
+            s3_size = int(s3info.get("Size", 0))
+            if s3_size != size:
+                report["files_mismatch"].append({"file": name, "expected_s3_key": s3_key, "azure_size": size, "s3_size": s3_size})
+            else:
+                report["files_ok"].append({"file": name, "s3_key": s3_key, "size": size})
+
+    # Upload report
+    report_body = json.dumps(report, indent=2)
+    report_key = f"{REPORT_PREFIX}/monitor-report-{ENV}-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}.json"
+    try:
+        s3_client.put_object(Bucket=REPORT_S3_BUCKET, Key=report_key, Body=report_body.encode('utf-8'))
+        print(f"Uploaded report to s3://{REPORT_S3_BUCKET}/{report_key}")
+    except Exception as e:
+        print("Failed to upload report:", e)
+        report["errors"].append({"upload_error": str(e)})
+
+    problems = len(report["files_missing"]) + len(report["files_mismatch"])
+    if problems > 0:
+        print("Validation FAILED. Problems found:")
+        print(json.dumps(report, indent=2))
+        sys.exit(3)
+    else:
+        print("Validation PASSED. All expected files are present and sizes match.")
+        print(json.dumps(report, indent=2))
+        return 0
+
+if __name__ == "__main__":
+    main()
