@@ -1,0 +1,63 @@
+import boto3
+import os
+from azure.storage.blob import BlobServiceClient
+from botocore.exceptions import ClientError
+import json
+
+# ENV
+SECRET_NAME = "azneprod"
+AZURE_CONTAINER = "uat"
+S3_BUCKET = os.getenv("S3_BUCKET")
+VERIFY_LAMBDA = os.getenv("VERIFY_LAMBDA")  # Name or ARN of Lambda #2
+
+secrets_client = boto3.client("secretsmanager")
+s3_client = boto3.client("s3")
+lambda_client = boto3.client("lambda")
+
+def get_secret():
+    try:
+        response = secrets_client.get_secret_value(SecretId=SECRET_NAME)
+        return eval(response["SecretString"])  
+    except ClientError as e:
+        print(f"Error retrieving secret: {e}")
+        raise
+
+def lambda_handler(event, context):
+    secret = get_secret()
+    connection_string = secret["connection_string"]
+    blob_service_client = BlobServiceClient.from_connection_string(conn_str=connection_string)
+    container_client = blob_service_client.get_container_client(AZURE_CONTAINER)
+
+    print(f"Getting ready to PUT in bucket: {S3_BUCKET}")
+
+    transferred_files = []
+
+    for blob in container_client.list_blobs():
+        blob_name = blob.name
+        print(f"Found blob: {blob_name}")
+        try:
+            blob_client = container_client.get_blob_client(blob_name)
+            blob_data = blob_client.download_blob().readall()
+            s3_client.put_object(Bucket=S3_BUCKET, Key=blob_name, Body=blob_data)
+
+            transferred_files.append({
+                "name": blob_name,
+                "size": blob.size
+            })
+            print(f"✅ Transferred {blob_name} ({blob.size} bytes) to S3")
+        except Exception as e:
+            print(f"❌ Error transferring {blob_name}: {e}")
+
+    # Trigger verification Lambda for this batch only
+    if transferred_files:
+        print("Triggering verification Lambda...")
+        payload = {
+            "bucket": S3_BUCKET,
+            "transferred_files": transferred_files
+        }
+        lambda_client.invoke(
+            FunctionName=VERIFY_LAMBDA,
+            InvocationType="Event",  # async
+            Payload=json.dumps(payload)
+        )
+        print("Verification Lambda triggered.")
