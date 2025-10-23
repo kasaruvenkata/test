@@ -5,10 +5,10 @@ trigger:
       - prod
 
 variables:
-  azureSubscription: 'akscluster_roadops'             # ✅ Your existing service connection
+  azureSubscription: 'akscluster_roadops'            
   resourceGroupName: 'azne-rg-roanon-t-aahelp'
-  aksClusterName: 'azne-aks-qa-t-aahelp-1'            # ✅ Added explicitly
-  aksNamespace: 'default'                             # ✅ Added for secret creation
+  aksClusterName: 'azne-aks-qa-t-aahelp-1'           
+  aksNamespace: 'default'                           
   templateFile: 'aks/main.bicep'
   parametersFile: 'aks/parameters/qa.parameters.json'
 
@@ -24,14 +24,14 @@ stages:
     steps:
     - checkout: self
 
-    # ✅ Step 1: Download wildcard.cert from Secure Files
+    #  Step 1: Download wildcard.cert from Secure Files
     - task: DownloadSecureFile@1
       name: downloadCert
       displayName: "Download wildcard.cert from Secure Files"
       inputs:
-        secureFile: 'wildcard.cert'
+        secureFile: 'wildcard cert.p7b'
 
-    # ✅ Step 2: Deploy AKS cluster via Bicep
+    #  Step 2: Deploy AKS cluster via Bicep
     - task: AzureCLI@2
       displayName: "Deploy AKS cluster using Bicep"
       inputs:
@@ -46,11 +46,11 @@ stages:
             --parameters @$(parametersFile)
       continueOnError: false
 
-    # ✅ Step 3: Wait briefly for propagation
+    #  Step 3: Wait briefly for propagation
     - script: sleep 30
       displayName: "Wait for AKS provisioning"
 
-    # ✅ Step 4: Get AKS Credentials (Fixed variable expansion)
+    #  Step 4: Get AKS Credentials (Fixed variable expansion)
     - task: AzureCLI@2
       displayName: "Get AKS Credentials"
       inputs:
@@ -67,7 +67,7 @@ stages:
         RESOURCEGROUPNAME: $(resourceGroupName)
         AKSCLUSTERNAME: $(aksClusterName)
 
-    # ✅ Step 5: Create Kubernetes TLS Secret using wildcard.cert
+    #  Step 5: Create Kubernetes TLS Secret using wildcard.cert
     - task: AzureCLI@2
       displayName: "Create Kubernetes TLS Secret (wildcard.cert)"
       inputs:
@@ -83,11 +83,11 @@ stages:
             --from-file=tls.crt="$(downloadCert.secureFilePath)" \
             -n "$AKSNAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
-          echo "✅ TLS secret 'wildcard-tls' successfully created in namespace '$AKSNAMESPACE'"
+          echo " TLS secret 'wildcard-tls' successfully created in namespace '$AKSNAMESPACE'"
       env:
         AKSNAMESPACE: $(aksNamespace)
 
-    # ✅ Step 6: Verify secret exists
+    #  Step 6: Verify secret exists
     - task: AzureCLI@2
       displayName: "Verify Kubernetes TLS Secret"
       inputs:
