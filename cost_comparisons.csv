@@ -1,0 +1,33 @@
+﻿Service,2025-11-01 ($),2025-10-01 ($),Cost difference ($),Cost difference (%)
+Total,1589.84,1242.37,-347.47,-21.86
+GuardDuty,282.64,0.05,-282.59,-99.98
+Tax,237.91,185.93,-51.98,-21.85
+Relational Database Service,731.13,754.06,22.93,3.14
+VPC,62.75,47.03,-15.72,-25.05
+EC2 - Other,70.29,58.3,-11.99,-17.06
+S3,91.48,84.48,-7,-7.65
+CloudWatch Events,1.17,0,-1.17,-100
+CloudWatch,2.37,1.22,-1.15,-48.52
+Elastic Container Service,26.59,27.6,1.01,3.8
+Key Management Service,4.42,3.63,-0.79,-17.87
+ElastiCache,12.96,13.39,0.43,3.32
+Elastic Load Balancing,37.29,37.62,0.33,0.88
+EC2-Instances,9.07,9.38,0.31,3.42
+CloudFront,0.1,0,-0.1,-100
+WAF,16.04,16,-0.04,-0.25
+EC2 Container Registry (ECR),0.29,0.32,0.03,10.34
+Lambda,0,0.03,0.03,
+API Gateway,0.01,0,-0.01,-100
+Secrets Manager,3.23,3.22,-0.01,-0.31
+Route 53,0.1,0.1,0,0
+SNS,0,0,0,
+SQS,0,0,0,
+Location Service,0,0,0,
+Step Functions,0,0,0,
+X-Ray,0,0,0,
+CloudShell,0,0,0,
+Certificate Manager,0,0,0,
+Cognito,0,0,0,
+CloudFormation,0,0,0,
+Glue,0,0,0,
+CloudTrail,0,0,0,
